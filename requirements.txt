@@ -1,0 +1,53 @@
+# ---------------------------------------------------------------------------
+# Nepali Sentiment NEPSE — Python dependencies
+# Tested on Python 3.10 / 3.11 / 3.12
+# Install:  pip install -r requirements.txt
+# ---------------------------------------------------------------------------
+
+# --- Core scientific stack ---------------------------------------------------
+numpy>=1.24,<3.0
+pandas>=2.0,<3.0
+scipy>=1.10
+pyyaml>=6.0
+
+# --- ML ---------------------------------------------------------------------
+scikit-learn>=1.3
+xgboost>=2.0
+statsmodels>=0.14
+
+# --- Deep learning (optional for the lightweight pipeline; needed for LSTM) -
+# torch + transformers are heavy; CI installs them in a separate job.
+torch>=2.1; sys_platform != "win32" or python_version > "3.11"
+transformers>=4.36
+tokenizers>=0.15
+
+# --- NLP / Devanagari -------------------------------------------------------
+indic-nlp-library>=0.92
+sentencepiece>=0.1.99
+
+# --- Calibration & conformal ------------------------------------------------
+mapie>=0.7            # conformal prediction helpers (optional)
+
+# --- Tracking & versioning --------------------------------------------------
+mlflow>=2.9
+dvc>=3.36            # data versioning
+
+# --- API & dashboard --------------------------------------------------------
+fastapi>=0.109
+uvicorn[standard]>=0.27
+streamlit>=1.31
+plotly>=5.18
+altair>=5.2
+
+# --- Scraping ---------------------------------------------------------------
+requests>=2.31
+aiohttp>=3.9
+beautifulsoup4>=4.12
+lxml>=5.1
+
+# --- Dev / test / lint ------------------------------------------------------
+pytest>=8.0
+pytest-cov>=4.1
+ruff>=0.3
+black>=24.2
+mypy>=1.8

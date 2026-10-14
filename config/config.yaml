@@ -1,0 +1,102 @@
+# =============================================================================
+# Nepali Sentiment NEPSE — project configuration
+# Loaded by nepse_nlp.utils.load_config()
+# =============================================================================
+
+project:
+  name: nepali-sentiment-nepse
+  version: 0.1.0
+  seed: 42
+  description: >
+    Sentiment Analysis of Nepali News for NEPSE Stock Prediction Using Jev
+    (System One Decision Model) and Confidence-Gated Hybrid Architectures.
+
+paths:
+  data_raw: data/raw
+  data_processed: data/processed
+  data_external: data/external
+  models: models
+  results: results
+  mlruns: mlruns
+
+# --- Phase 1: Data collection ------------------------------------------------
+data:
+  news_sources:
+    - merolagani
+    - sharesansar
+    - nepalipaisa
+    - bizmandu
+  nepse:
+    start_date: "2024-01-01"
+    end_date: "2024-12-31"
+  preprocessing:
+    normalize_unicode: true
+    strip_html: true
+    strip_urls: true
+    strip_emojis: true
+    remove_stopwords: true
+  labeled_subset_target: 2000  # headlines, manual + weak supervision
+
+# --- Phase 2: Jev zero-shot benchmark ----------------------------------------
+jev:
+  backend: simulated         # "simulated" (offline) | "http" (real Jev API)
+  api_endpoint: https://api.jev.ai/v1/decide
+  api_key_env: JEV_API_KEY   # read from env; if unset -> simulated
+  labels_3: [negative, neutral, positive]
+  labels_5: [very_negative, negative, neutral, positive, very_positive]
+  batch_size: 32
+
+baselines:
+  models:
+    - nepalibert
+    - muril
+    - xlm-roberta-large
+    - gpt-4o-simulated
+
+calibration:
+  n_bins: 10
+
+# --- Phase 3: Confidence-gated hybrid ----------------------------------------
+hybrid:
+  fast_model: jev
+  escalation_model: xlm-roberta-large
+  default_threshold: 0.70
+  conformal_alpha: 0.10
+  cost_fast_usd: 0.0002     # per 1k tokens (illustrative)
+  cost_slow_usd: 0.0050
+  pareto_thresholds: [0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.95]
+
+# --- Phase 4: NEPSE prediction -----------------------------------------------
+prediction:
+  target: direction          # "direction" | "return"
+  models: [xgboost, logreg, lstm]
+  walk_forward:
+    min_train: 120
+    step: 1
+  features:
+    sentiment: true
+    technical: true
+    lag_returns: [1, 2, 3, 5, 10]
+
+# --- Phase 5: Backtesting ----------------------------------------------------
+backtest:
+  initial_capital: 1000000.0   # NPR
+  brokerage_pct: 0.0040
+  sebon_pct: 0.00015
+  dp_fee: 25.0
+  capital_gains_tax: 0.05
+  allow_short: false          # NEPSE has no shorting
+
+# --- Phase 5: Deployment ----------------------------------------------------
+api:
+  host: 0.0.0.0
+  port: 8000
+  cors_origins: ["*"]
+
+dashboard:
+  port: 8501
+
+# --- Tracking ----------------------------------------------------------------
+tracking:
+  backend: mlflow             # "mlflow" | "none"
+  experiment_name: nepse-sentiment

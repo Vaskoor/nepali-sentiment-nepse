@@ -1,0 +1,101 @@
+# ---------------------------------------------------------------------------
+# Nepali Sentiment NEPSE — .gitignore
+# ---------------------------------------------------------------------------
+
+# --- Python -----------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# --- Virtual envs -----------------------------------------------------------
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# --- Editors / OS -----------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# --- Jupyter ----------------------------------------------------------------
+.ipynb_checkpoints/
+*.ipynb
+
+# --- Project data & artifacts (keep dirs, ignore contents) ------------------
+data/raw/*
+data/processed/*
+data/external/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/external/.gitkeep
+models/*
+!models/.gitkeep
+mlruns/*
+!mlruns/.gitkeep
+results/*
+!results/.gitkeep
+*.pkl
+*.joblib
+*.pt
+*.bin
+*.safetensors
+
+# --- MLflow / DVC ----------------------------------------------------------
+.mlruns/
+mlartifacts/
+.dvc/
+.dvc/cache/
+*.dvc.lock
+
+# --- Coverage / testing -----------------------------------------------------
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.pytest_cache/
+.cache/
+nosetests.xml
+coverage.xml
+
+# --- Docs builds -----------------------------------------------------------
+docs/_build/
+site/
+
+# --- Env / secrets ---------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+secrets.yaml
+
+# --- OS / misc -------------------------------------------------------------
+*.log
+*.tmp
+tmp/

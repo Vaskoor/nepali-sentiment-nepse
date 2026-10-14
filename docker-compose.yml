@@ -1,0 +1,44 @@
+# =============================================================================
+# Nepali Sentiment NEPSE — docker-compose stack
+#   - api       : FastAPI service (port 8000)
+#   - dashboard : Streamlit dashboard (port 8501)
+# =============================================================================
+services:
+  api:
+    build: .
+    image: nepali-sentiment-nepse:latest
+    container_name: nepse-api
+    ports:
+      - "8000:8000"
+    environment:
+      - NEPSE_ENV=production
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./data:/app/data
+      - ./results:/app/results
+      - ./models:/app/models
+      - ./mlruns:/app/mlruns
+    command: ["python", "-m", "uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health',timeout=4).status==200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  dashboard:
+    build: .
+    image: nepali-sentiment-nepse:latest
+    container_name: nepse-dashboard
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "8501:8501"
+    environment:
+      - NEPSE_API_URL=http://api:8000
+    volumes:
+      - ./data:/app/data
+      - ./results:/app/results
+    command: ["python", "-m", "streamlit", "run", "dashboard/app.py", "--server.port", "8501", "--server.address", "0.0.0.0"]
+    restart: unless-stopped

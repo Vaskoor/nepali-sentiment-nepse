@@ -1,0 +1,95 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nepse-nlp"
+version = "0.1.0"
+description = "Sentiment Analysis of Nepali News for NEPSE Stock Prediction Using Jev and Confidence-Gated Hybrid Architectures"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Nepse NLP Research" }]
+keywords = [
+  "nepali", "sentiment-analysis", "nepse", "low-resource-nlp",
+  "financial-nlp", "conformal-prediction", "calibration", "jev"
+]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "License :: OSI Approved :: MIT License",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+  "numpy>=1.24,<3.0",
+  "pandas>=2.0,<3.0",
+  "scipy>=1.10",
+  "pyyaml>=6.0",
+  "scikit-learn>=1.3",
+  "xgboost>=2.0",
+  "statsmodels>=0.14",
+]
+
+[project.optional-dependencies]
+deep = ["torch>=2.1", "transformers>=4.36", "tokenizers>=0.15", "indic-nlp-library>=0.92"]
+api = ["fastapi>=0.109", "uvicorn[standard]>=0.27", "streamlit>=1.31", "plotly>=5.18", "altair>=5.2"]
+scrape = ["requests>=2.31", "aiohttp>=3.9", "beautifulsoup4>=4.12", "lxml>=5.1"]
+track = ["mlflow>=2.9", "dvc>=3.36"]
+dev = ["pytest>=8.0", "pytest-cov>=4.1", "ruff>=0.3", "black>=24.2", "mypy>=1.8"]
+all = ["nepse-nlp[deep,api,scrape,track,dev]"]
+
+[project.urls]
+Homepage = "https://github.com/your-username/nepali-sentiment-nepse"
+Documentation = "https://github.com/your-username/nepali-sentiment-nepse#readme"
+Issues = "https://github.com/your-username/nepali-sentiment-nepse/issues"
+
+[project.scripts]
+nepse-phase1 = "scripts.phase1_preprocess:main"
+nepse-phase2 = "scripts.phase2_benchmark:main"
+nepse-phase3 = "scripts.phase3_hybrid:main"
+nepse-phase4 = "scripts.phase4_predict:main"
+nepse-phase5 = "scripts.phase5_backtest:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-ra -q --strict-markers"
+markers = [
+  "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+  "gpu: marks tests requiring GPU",
+]
+
+# --------------------------------------------------------------------------- #
+#  Linting & formatting                                                       #
+# --------------------------------------------------------------------------- #
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+extend-exclude = ["data", "mlruns", "models", "notebooks"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "C4", "SIM"]
+ignore = ["E501"]  # line length handled by formatter
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B011"]
+"scripts/*" = ["E402"]  # sys.path inserts before package imports
+
+[tool.black]
+line-length = 100
+target-version = ["py310", "py311", "py312"]
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+warn_unused_ignores = false
+check_untyped_defs = false
