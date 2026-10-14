@@ -66,10 +66,10 @@ __all__ = ["NEPSE_COSTS", "Backtester", "backtest_strategy"]
 #: expressed as fractions (e.g. 0.004 == 0.4 %). Capital gains tax is
 #: only levied on realised profit.
 NEPSE_COSTS: Dict[str, float] = {
-    "brokerage_pct": 0.004,        # 0.4 % standard broker commission
-    "sebon_pct": 0.00015,          # SEBON fee
-    "dp_fee": 25.0,                # flat DP / CDS&Clearing fee (NPR)
-    "capital_gains_tax": 0.05,     # 5 % on realised gains (optional)
+    "brokerage_pct": 0.004,  # 0.4 % standard broker commission
+    "sebon_pct": 0.00015,  # SEBON fee
+    "dp_fee": 25.0,  # flat DP / CDS&Clearing fee (NPR)
+    "capital_gains_tax": 0.05,  # 5 % on realised gains (optional)
 }
 
 
@@ -175,16 +175,13 @@ class Backtester:
             dtype=int,
         )
         if len(sig) != n:
-            raise ValueError(
-                f"signals (len={len(sig)}) and closes (len={n}) must align"
-            )
+            raise ValueError(f"signals (len={len(sig)}) and closes (len={n}) must align")
 
         # State.
         cash = self.initial_capital
-        position: Optional[int] = None       # +1 long, None flat.
+        position: Optional[int] = None  # +1 long, None flat.
         entry_price: float = 0.0
-        n_units: float = 0.0                  # units currently held
-        entry_notional: float = 0.0
+        n_units: float = 0.0  # units currently held
         equity_curve = np.zeros(n, dtype=float)
         trades: List[Dict] = []
         wins = 0
@@ -195,9 +192,8 @@ class Backtester:
             target_sig = sig[t]
 
             # Mark-to-market equity before any action at t.
-            mtm_equity = cash
             if position == 1:
-                mtm_equity = cash + n_units * price
+                cash + n_units * price
 
             # Exit if currently long and target is flat (or would short).
             if position == 1 and target_sig != 1:
@@ -205,21 +201,22 @@ class Backtester:
                 realised_pnl = (price - entry_price) * n_units
                 cost = self._exit_cost(gross_proceeds, realised_pnl)
                 cash += gross_proceeds - cost
-                trades.append({
-                    "entry_date_idx": trades[-1]["entry_date_idx"] if False else None,
-                    "exit_date_idx": t,
-                    "entry_price": entry_price,
-                    "exit_price": price,
-                    "units": n_units,
-                    "pnl": realised_pnl - cost,
-                    "cost": cost,
-                })
+                trades.append(
+                    {
+                        "entry_date_idx": trades[-1]["entry_date_idx"] if False else None,
+                        "exit_date_idx": t,
+                        "entry_price": entry_price,
+                        "exit_price": price,
+                        "units": n_units,
+                        "pnl": realised_pnl - cost,
+                        "cost": cost,
+                    }
+                )
                 if realised_pnl - cost > 0:
                     wins += 1
                 position = None
                 n_units = 0.0
                 entry_price = 0.0
-                entry_notional = 0.0
 
             # Enter long if currently flat and target_sig is +1.
             if position is None and target_sig == 1:
@@ -231,16 +228,17 @@ class Backtester:
                     cash = 0.0
                     position = 1
                     entry_price = price
-                    entry_notional = notional
-                    trades.append({
-                        "entry_date_idx": t,
-                        "exit_date_idx": None,
-                        "entry_price": price,
-                        "exit_price": None,
-                        "units": n_units,
-                        "pnl": None,
-                        "cost": cost,
-                    })
+                    trades.append(
+                        {
+                            "entry_date_idx": t,
+                            "exit_date_idx": None,
+                            "entry_price": price,
+                            "exit_price": None,
+                            "units": n_units,
+                            "pnl": None,
+                            "cost": cost,
+                        }
+                    )
 
             # Mark-to-market equity at end of period t.
             if position == 1:
@@ -258,15 +256,17 @@ class Backtester:
             cash += gross_proceeds - cost
             if realised_pnl - cost > 0:
                 wins += 1
-            trades.append({
-                "entry_date_idx": t_last,
-                "exit_date_idx": t_last,
-                "entry_price": entry_price,
-                "exit_price": price,
-                "units": n_units,
-                "pnl": realised_pnl - cost,
-                "cost": cost,
-            })
+            trades.append(
+                {
+                    "entry_date_idx": t_last,
+                    "exit_date_idx": t_last,
+                    "entry_price": entry_price,
+                    "exit_price": price,
+                    "units": n_units,
+                    "pnl": realised_pnl - cost,
+                    "cost": cost,
+                }
+            )
             equity_curve[t_last] = cash
 
         # --- Final metrics ---
@@ -286,7 +286,9 @@ class Backtester:
         mdd = self.max_drawdown(equity_curve)
 
         equity_series = pd.Series(
-            equity_curve, index=pd.Series(closes).index, name="equity",
+            equity_curve,
+            index=pd.Series(closes).index,
+            name="equity",
         )
         return {
             "equity_curve": equity_series,
@@ -392,8 +394,11 @@ def backtest_strategy(
 
     # 1. Predictions out-of-sample.
     wf = walk_forward(
-        df=df, model_type=model_type, target=target,
-        min_train=min_train, step=step,
+        df=df,
+        model_type=model_type,
+        target=target,
+        min_train=min_train,
+        step=step,
     )
     pred_metrics = wf["metrics"]
     predictions = wf["predictions"]
@@ -406,9 +411,7 @@ def backtest_strategy(
     closes_aligned = closes_full.reindex(date_idx)
 
     # Signals: +1 for positive predictions, 0 otherwise.
-    signals: List[int] = [
-        int(np.sign(float(p)) > 0) for p in predictions
-    ]
+    signals: List[int] = [int(np.sign(float(p)) > 0) for p in predictions]
 
     # 3. Backtest.
     bt = Backtester(initial_capital=initial_capital, costs=costs)

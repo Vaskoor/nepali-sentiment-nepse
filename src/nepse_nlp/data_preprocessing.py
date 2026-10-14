@@ -43,8 +43,8 @@ Design notes
 
 from __future__ import annotations
 
-import re
 import json
+import re
 import unicodedata
 from typing import Dict, List
 
@@ -93,19 +93,19 @@ _HASHTAG_RE = re.compile(r"#(\w+)")
 # Emoji stripper covering the common pictographic/symbol ranges.
 _EMOJI_RE = re.compile(
     "["
-    "\U0001F300-\U0001F5FF"   # symbols & pictographs
-    "\U0001F600-\U0001F64F"   # emoticons
-    "\U0001F680-\U0001F6FF"   # transport & map
-    "\U0001F700-\U0001F77F"   # alchemical symbols
-    "\U0001F780-\U0001F7FF"   # geometric shapes ext
-    "\U0001F800-\U0001F8FF"   # supplemental arrows-C
-    "\U0001F900-\U0001F9FF"   # supplemental symbols & pictographs
-    "\U0001FA00-\U0001FA6F"   # chess symbols / extended-A
-    "\U0001FA70-\U0001FAFF"   # symbols & pictographs extended-A/B
-    "\U00002600-\U000026FF"   # misc symbols
-    "\U00002700-\U000027BF"   # dingbats
-    "\U0001F000-\U0001F02F"   # mahjong / dominoes
-    "\U0001F0A0-\U0001F0FF"   # playing cards
+    "\U0001f300-\U0001f5ff"  # symbols & pictographs
+    "\U0001f600-\U0001f64f"  # emoticons
+    "\U0001f680-\U0001f6ff"  # transport & map
+    "\U0001f700-\U0001f77f"  # alchemical symbols
+    "\U0001f780-\U0001f7ff"  # geometric shapes ext
+    "\U0001f800-\U0001f8ff"  # supplemental arrows-C
+    "\U0001f900-\U0001f9ff"  # supplemental symbols & pictographs
+    "\U0001fa00-\U0001fa6f"  # chess symbols / extended-A
+    "\U0001fa70-\U0001faff"  # symbols & pictographs extended-A/B
+    "\U00002600-\U000026ff"  # misc symbols
+    "\U00002700-\U000027bf"  # dingbats
+    "\U0001f000-\U0001f02f"  # mahjong / dominoes
+    "\U0001f0a0-\U0001f0ff"  # playing cards
     "]+",
     flags=re.UNICODE,
 )
@@ -180,6 +180,7 @@ STOPWORDS_NE: frozenset = frozenset(
 # Public API
 # ---------------------------------------------------------------------------
 
+
 def normalize_devanagari(text: str) -> str:
     """NFC-normalize a Devanagari string and strip noise.
 
@@ -218,12 +219,12 @@ def clean_text(text: str) -> str:
     """
     if not isinstance(text, str):
         text = str(text)
-    text = _HTML_TAG_RE.sub(" ", text)      # drop HTML tags
-    text = _URL_RE.sub(" ", text)           # drop URLs
-    text = _MENTION_RE.sub(" ", text)       # drop @mentions
-    text = _HASHTAG_RE.sub(r"\1", text)     # keep hashtag word, drop '#'
-    text = _EMOJI_RE.sub(" ", text)         # drop emoji
-    text = _WS_RE.sub(" ", text).strip()    # collapse whitespace
+    text = _HTML_TAG_RE.sub(" ", text)  # drop HTML tags
+    text = _URL_RE.sub(" ", text)  # drop URLs
+    text = _MENTION_RE.sub(" ", text)  # drop @mentions
+    text = _HASHTAG_RE.sub(r"\1", text)  # keep hashtag word, drop '#'
+    text = _EMOJI_RE.sub(" ", text)  # drop emoji
+    text = _WS_RE.sub(" ", text).strip()  # collapse whitespace
     return text
 
 

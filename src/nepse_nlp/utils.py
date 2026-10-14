@@ -4,6 +4,7 @@ All path constants are anchored to the repository layout so that the package
 works both when installed (``pip install -e .``) and when used via ``sys.path``
 insertion from scripts/tests.
 """
+
 from __future__ import annotations
 
 import logging

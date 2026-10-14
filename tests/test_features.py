@@ -35,9 +35,9 @@ from nepse_nlp.features import (  # noqa: E402
 )
 from nepse_nlp.prediction import (  # noqa: E402
     NEPSEPredictor,
-    walk_forward,
-    compare_models,
     ablation_sentiment_vs_baseline,
+    compare_models,
+    walk_forward,
 )
 
 
@@ -50,35 +50,37 @@ def _make_ohlcv(n_days: int = 250, seed: int = 42) -> pd.DataFrame:
     # Mean-reverting random walk for close.
     rets = rng.normal(0.0002, 0.012, size=n_days)
     close = 2000.0 * np.exp(np.cumsum(rets))
-    dates = pd.date_range(end=pd.Timestamp.today().normalize(),
-                          periods=n_days, freq="B")
-    df = pd.DataFrame({
-        "date": dates,
-        "open": close * (1 - rng.uniform(0, 0.01, size=n_days)),
-        "high": close * (1 + rng.uniform(0, 0.02, size=n_days)),
-        "low": close * (1 - rng.uniform(0, 0.02, size=n_days)),
-        "close": close,
-        "volume": rng.uniform(1e5, 1e7, size=n_days),
-    })
+    dates = pd.date_range(end=pd.Timestamp.today().normalize(), periods=n_days, freq="B")
+    df = pd.DataFrame(
+        {
+            "date": dates,
+            "open": close * (1 - rng.uniform(0, 0.01, size=n_days)),
+            "high": close * (1 + rng.uniform(0, 0.02, size=n_days)),
+            "low": close * (1 - rng.uniform(0, 0.02, size=n_days)),
+            "close": close,
+            "volume": rng.uniform(1e5, 1e7, size=n_days),
+        }
+    )
     return df
 
 
 def _make_news(n_articles: int = 500, seed: int = 7) -> pd.DataFrame:
     """Build synthetic news-level sentiment records."""
     rng = np.random.default_rng(seed)
-    dates = pd.date_range(end=pd.Timestamp.today().normalize(),
-                          periods=n_articles, freq="D")
+    dates = pd.date_range(end=pd.Timestamp.today().normalize(), periods=n_articles, freq="D")
     # Mix positive/negative/neutral labels with some day-clustering.
     base_idx = rng.integers(0, 3, size=n_articles)
     label_map = {0: "positive", 1: "negative", 2: "neutral"}
     labels = [label_map[i] for i in base_idx]
     conf = rng.uniform(0.5, 0.99, size=n_articles)
-    return pd.DataFrame({
-        "date": dates,
-        "label": labels,
-        "confidence": conf,
-        "text": ["sample headline"] * n_articles,
-    })
+    return pd.DataFrame(
+        {
+            "date": dates,
+            "label": labels,
+            "confidence": conf,
+            "text": ["sample headline"] * n_articles,
+        }
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -111,9 +113,7 @@ def test_macd_shapes():
     assert len(signal_line) == len(df)
     assert len(hist) == len(df)
     # Histogram equals macd - signal by construction.
-    np.testing.assert_allclose(
-        hist.values, (macd_line - signal_line).values, equal_nan=True
-    )
+    np.testing.assert_allclose(hist.values, (macd_line - signal_line).values, equal_nan=True)
 
 
 # ---------------------------------------------------------------------------
@@ -170,9 +170,20 @@ def test_aggregate_daily_sentiment_empty():
 def test_technical_indicators_adds_columns():
     df = _make_ohlcv(n_days=100)
     out = technical_indicators(df)
-    for col in ("rsi", "macd", "macd_signal", "macd_hist",
-                "ma_5", "ma_10", "ma_20", "ma_50",
-                "returns", "log_ret", "volatility", "volume_zscore"):
+    for col in (
+        "rsi",
+        "macd",
+        "macd_signal",
+        "macd_hist",
+        "ma_5",
+        "ma_10",
+        "ma_20",
+        "ma_50",
+        "returns",
+        "log_ret",
+        "volatility",
+        "volume_zscore",
+    ):
         assert col in out.columns, f"missing {col}"
 
 
@@ -200,10 +211,12 @@ def test_build_feature_matrix_no_lookahead():
     # *current* period's return and must NOT equal next_ret (which is
     # the next period's return). Specifically, next_ret at row i should
     # equal returns at row i+1.
-    aligned = pd.DataFrame({
-        "next_ret": feats["next_ret"].values,
-        "next_period_ret": feats["returns"].shift(-1).values,
-    }).dropna()
+    aligned = pd.DataFrame(
+        {
+            "next_ret": feats["next_ret"].values,
+            "next_period_ret": feats["returns"].shift(-1).values,
+        }
+    ).dropna()
     # next_ret[i] == returns[i+1] for the same close. This proves the
     # shift is genuinely +1.
     if len(aligned) > 0:
@@ -223,8 +236,11 @@ def test_walk_forward_directional_accuracy_range():
     df_news = _make_news(n_articles=300, seed=5)
     feats = build_feature_matrix(df_price, df_news)
     res = walk_forward(
-        df=feats, model_type="xgboost", target="direction",
-        min_train=120, step=5,
+        df=feats,
+        model_type="xgboost",
+        target="direction",
+        min_train=120,
+        step=5,
     )
     assert "metrics" in res
     assert "predictions" in res
@@ -243,8 +259,11 @@ def test_walk_forward_logreg_runs():
     df_news = _make_news(n_articles=300, seed=5)
     feats = build_feature_matrix(df_price, df_news)
     res = walk_forward(
-        df=feats, model_type="logreg", target="direction",
-        min_train=120, step=10,
+        df=feats,
+        model_type="logreg",
+        target="direction",
+        min_train=120,
+        step=10,
     )
     assert 0.0 <= res["metrics"]["directional_accuracy"] <= 1.0
 
@@ -296,7 +315,10 @@ def test_ablation_sentiment_vs_baseline_returns_delta():
     df_news = _make_news(n_articles=300, seed=5)
     feats = build_feature_matrix(df_price, df_news)
     res = ablation_sentiment_vs_baseline(
-        feats, target="direction", min_train=120, step=10,
+        feats,
+        target="direction",
+        min_train=120,
+        step=10,
     )
     assert "with_sentiment" in res
     assert "baseline" in res

@@ -27,7 +27,7 @@ from __future__ import annotations
 import json
 import os
 import sys
-from typing import Any, Dict
+from typing import Dict
 
 import numpy as np
 import pandas as pd
@@ -40,20 +40,24 @@ if _SRC_DIR not in sys.path:
     sys.path.insert(0, _SRC_DIR)
 
 try:
-    from nepse_nlp.utils import set_seed, get_logger
+    from nepse_nlp.utils import get_logger, set_seed
+
     _LOGGER = get_logger("phase5_backtest")
 except Exception:  # pragma: no cover - degrade gracefully
     import logging
+
     _LOGGER = logging.getLogger("phase5_backtest")
     logging.basicConfig(level=logging.INFO)
 
     def set_seed(seed: int = 42) -> None:  # type: ignore[no-redef]
         import random
+
         random.seed(seed)
         np.random.seed(seed)
 
+
+from nepse_nlp.backtest import NEPSE_COSTS, backtest_strategy  # noqa: E402
 from nepse_nlp.features import build_feature_matrix  # noqa: E402
-from nepse_nlp.backtest import backtest_strategy, NEPSE_COSTS  # noqa: E402
 
 # Reuse the Phase 4 data simulators (lazy import; copy if missing).
 try:
@@ -61,6 +65,7 @@ try:
         _simulate_nepse_ohlcv,
         _simulate_news_sentiment,
     )
+
     _PHASE4_AVAILABLE = True
 except Exception:
     _PHASE4_AVAILABLE = False
@@ -74,6 +79,7 @@ def _local_simulate_nepse_ohlcv(n_days: int = 500, seed: int = 42) -> pd.DataFra
     """
     try:
         from nepse_nlp.scraper import simulate_nepse_series  # lazy
+
         sim = simulate_nepse_series(n_days=n_days, seed=seed)
     except Exception:
         sim = None
@@ -84,7 +90,9 @@ def _local_simulate_nepse_ohlcv(n_days: int = 500, seed: int = 42) -> pd.DataFra
             df["date"] = pd.to_datetime(df["date"])
         else:
             df["date"] = pd.date_range(
-                end=pd.Timestamp.today().normalize(), periods=len(df), freq="B",
+                end=pd.Timestamp.today().normalize(),
+                periods=len(df),
+                freq="B",
             )
         return df
 
@@ -94,16 +102,17 @@ def _local_simulate_nepse_ohlcv(n_days: int = 500, seed: int = 42) -> pd.DataFra
         rets = rng.normal(0.0003, 0.012, size=n_days)
         close_arr = 2000.0 * np.exp(np.cumsum(rets))
     rng = np.random.default_rng(seed + 1)
-    dates = pd.date_range(end=pd.Timestamp.today().normalize(),
-                          periods=n_days, freq="B")
-    return pd.DataFrame({
-        "date": dates,
-        "open": close_arr * (1 - rng.uniform(0, 0.01, size=n_days)),
-        "high": close_arr * (1 + rng.uniform(0, 0.02, size=n_days)),
-        "low": close_arr * (1 - rng.uniform(0, 0.02, size=n_days)),
-        "close": close_arr,
-        "volume": rng.uniform(1e5, 1e7, size=n_days),
-    })
+    dates = pd.date_range(end=pd.Timestamp.today().normalize(), periods=n_days, freq="B")
+    return pd.DataFrame(
+        {
+            "date": dates,
+            "open": close_arr * (1 - rng.uniform(0, 0.01, size=n_days)),
+            "high": close_arr * (1 + rng.uniform(0, 0.02, size=n_days)),
+            "low": close_arr * (1 - rng.uniform(0, 0.02, size=n_days)),
+            "close": close_arr,
+            "volume": rng.uniform(1e5, 1e7, size=n_days),
+        }
+    )
 
 
 def _local_simulate_news_sentiment(df_price: pd.DataFrame, seed: int = 7) -> pd.DataFrame:
@@ -117,21 +126,25 @@ def _local_simulate_news_sentiment(df_price: pd.DataFrame, seed: int = 7) -> pd.
         p_pos = 0.33 + 0.4 * np.tanh(prev_ret * 100.0)
         p_neg = 0.33 - 0.3 * np.tanh(prev_ret * 100.0)
         p_neu = 1.0 - p_pos - p_neg
-        p_pos = max(0.05, p_pos); p_neg = max(0.05, p_neg)
+        p_pos = max(0.05, p_pos)
+        p_neg = max(0.05, p_neg)
         p_neu = max(0.05, p_neu)
         s = p_pos + p_neg + p_neu
         p_pos, p_neg, p_neu = p_pos / s, p_neg / s, p_neu / s
         n_articles = int(rng.integers(1, 5))
-        labels = rng.choice(["positive", "negative", "neutral"],
-                             size=n_articles, p=[p_pos, p_neg, p_neu])
+        labels = rng.choice(
+            ["positive", "negative", "neutral"], size=n_articles, p=[p_pos, p_neg, p_neu]
+        )
         conf = rng.uniform(0.5, 0.99, size=n_articles)
         for j in range(n_articles):
-            records.append({
-                "date": pd.Timestamp(d),
-                "label": labels[j],
-                "confidence": float(conf[j]),
-                "text": "simulated news headline",
-            })
+            records.append(
+                {
+                    "date": pd.Timestamp(d),
+                    "label": labels[j],
+                    "confidence": float(conf[j]),
+                    "text": "simulated news headline",
+                }
+            )
     return pd.DataFrame(records)
 
 
@@ -175,8 +188,7 @@ def main() -> int:
     else:
         df_price = _local_simulate_nepse_ohlcv(n_days=500, seed=42)
         df_news = _local_simulate_news_sentiment(df_price, seed=7)
-    _LOGGER.info("Loaded %d price rows and %d news records",
-                 len(df_price), len(df_news))
+    _LOGGER.info("Loaded %d price rows and %d news records", len(df_price), len(df_news))
 
     # 2. Features.
     feats = build_feature_matrix(df_price, df_news)

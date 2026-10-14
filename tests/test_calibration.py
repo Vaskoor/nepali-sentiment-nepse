@@ -34,7 +34,7 @@ from nepse_nlp.calibration import (  # noqa: E402
     expected_calibration_error,
     reliability_data,
 )
-from nepse_nlp.conformal import calibrate_conformal, ConformalGate  # noqa: E402
+from nepse_nlp.conformal import ConformalGate, calibrate_conformal  # noqa: E402
 
 LABELS = ["negative", "neutral", "positive"]
 
@@ -103,12 +103,10 @@ def test_reliability_data_keys():
 # ---------------------------------------------------------------------------
 def test_conformal_threshold():
     """Threshold is a valid score quantile; should_escalate is consistent."""
-    scores = np.array([0.1, 0.2, 0.3, 0.4, 0.5,
-                       0.6, 0.7, 0.8, 0.9, 1.0])
+    scores = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
     thr = calibrate_conformal(scores, alpha=0.1)
     # The threshold should lie within the data range.
-    assert float(scores.min()) <= thr <= float(scores.max()), \
-        f"threshold {thr} not in score range"
+    assert float(scores.min()) <= thr <= float(scores.max()), f"threshold {thr} not in score range"
     # ConformalGate reproduces the threshold and applies the rule
     # "score < threshold -> escalate" consistently.
     gate = ConformalGate(alpha=0.1)
@@ -123,8 +121,8 @@ def test_conformal_threshold():
 # ---------------------------------------------------------------------------
 def test_hybrid_escalation():
     """Low-confidence input triggers escalation; high-confidence doesn't."""
-    from nepse_nlp.jev_benchmark import JevClassifier
     from nepse_nlp.hybrid_pipeline import HybridPipeline
+    from nepse_nlp.jev_benchmark import JevClassifier
 
     fast = JevClassifier(backend="simulated", seed=42)
     pipe = HybridPipeline(fast_model=fast, threshold=0.7)
@@ -136,8 +134,6 @@ def test_hybrid_escalation():
 
     # A clearly positive text with multiple lexicon hits -> high confidence
     # -> stays on the fast path.
-    res_high = pipe.predict(
-        "profit growth record surge strong high gain rally"
-    )
+    res_high = pipe.predict("profit growth record surge strong high gain rally")
     assert res_high["source"] == "fast", res_high
     assert "escalation_result" not in res_high

@@ -36,8 +36,8 @@ Usage::
 from __future__ import annotations
 
 import csv
-import sys
 import pathlib
+import sys
 from typing import Any, Dict, List
 
 # Make ``nepse_nlp`` importable from the repo's ``src/`` directory without an
@@ -49,7 +49,7 @@ sys.path.insert(0, str(_REPO_ROOT / "src"))
 # symbols; if the lead's module is not yet present we fall back to a minimal
 # shim so this script remains runnable in isolation.
 try:
-    from nepse_nlp.utils import set_seed, get_logger, PROCESSED_DIR  # type: ignore
+    from nepse_nlp.utils import PROCESSED_DIR, get_logger, set_seed  # type: ignore
 except Exception:  # pragma: no cover - defensive fallback
     import logging
     import random as _random
@@ -58,6 +58,7 @@ except Exception:  # pragma: no cover - defensive fallback
         _random.seed(seed)
         try:
             import numpy as _np  # type: ignore
+
             _np.random.seed(seed)
         except Exception:
             pass
@@ -67,9 +68,8 @@ except Exception:  # pragma: no cover - defensive fallback
 
     PROCESSED_DIR = _REPO_ROOT / "data" / "processed"  # type: ignore[assignment]
 
-from nepse_nlp.scraper import simulated_headlines, simulate_nepse_series  # noqa: E402
 from nepse_nlp.data_preprocessing import preprocess_pipeline  # noqa: E402
-
+from nepse_nlp.scraper import simulate_nepse_series, simulated_headlines  # noqa: E402
 
 NEWS_CSV_FIELDS = [
     "date",

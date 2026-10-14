@@ -46,7 +46,7 @@ __all__ = [
 # CI before the lead's utils.py lands.
 # ---------------------------------------------------------------------------
 try:  # pragma: no cover - exercised only when utils is available
-    from nepse_nlp.utils import set_seed, get_logger  # type: ignore
+    from nepse_nlp.utils import get_logger, set_seed  # type: ignore
 except Exception:  # pragma: no cover - stub fallback
     import logging
     import random
@@ -61,6 +61,7 @@ except Exception:  # pragma: no cover - stub fallback
     def get_logger(name: str):
         return logging.getLogger(name)
 
+
 # Guarded import of the sibling calibration module.
 try:
     from nepse_nlp.calibration import (  # type: ignore
@@ -68,6 +69,7 @@ try:
         expected_calibration_error,
         reliability_data,
     )
+
     _HAS_CALIBRATION = True
 except Exception:  # pragma: no cover
     _HAS_CALIBRATION = False
@@ -93,14 +95,38 @@ LABELS_5: List[str] = [
 # Small Nepali + English sentiment lexicon (15 positive + 15 negative)
 # ---------------------------------------------------------------------------
 POSITIVE_LEXICON: List[str] = [
-    "बढ्यो", "नाफा", "उच्च", "मजबूत", "वृद्धि",
-    "रेकर्ड", "सकारात्मक", "surge", "profit", "growth",
-    "record", "strong", "high", "gain", "rally",
+    "बढ्यो",
+    "नाफा",
+    "उच्च",
+    "मजबूत",
+    "वृद्धि",
+    "रेकर्ड",
+    "सकारात्मक",
+    "surge",
+    "profit",
+    "growth",
+    "record",
+    "strong",
+    "high",
+    "gain",
+    "rally",
 ]
 NEGATIVE_LEXICON: List[str] = [
-    "घट्यो", "घाटा", "नोक्सान", "कमजोर", "गिरावट",
-    "चिन्ता", "loss", "fall", "decline", "weak",
-    "drop", "crash", "worry", "debt", "fraud",
+    "घट्यो",
+    "घाटा",
+    "नोक्सान",
+    "कमजोर",
+    "गिरावट",
+    "चिन्ता",
+    "loss",
+    "fall",
+    "decline",
+    "weak",
+    "drop",
+    "crash",
+    "worry",
+    "debt",
+    "fraud",
 ]
 
 
@@ -176,15 +202,15 @@ class JevClassifier:
     argmax label and its probability are returned as the prediction.
     """
 
-    def __init__(self,
-                 backend: str = "simulated",
-                 api_key: Optional[str] = None,
-                 labels: Sequence[str] = LABELS_3,
-                 seed: int = 42):
+    def __init__(
+        self,
+        backend: str = "simulated",
+        api_key: Optional[str] = None,
+        labels: Sequence[str] = LABELS_3,
+        seed: int = 42,
+    ):
         if backend not in ("simulated", "http"):
-            raise ValueError(
-                f"backend must be 'simulated' or 'http'; got {backend!r}"
-            )
+            raise ValueError(f"backend must be 'simulated' or 'http'; got {backend!r}")
         self.backend = backend
         self.api_key = api_key
         self.labels = list(labels)
@@ -226,7 +252,7 @@ class JevClassifier:
             five = np.zeros(5, dtype=np.float64)
             five[0] = probs[0] * 0.45  # very_negative
             five[1] = probs[0] * 0.55  # negative
-            five[2] = probs[1]          # neutral
+            five[2] = probs[1]  # neutral
             five[3] = probs[2] * 0.55  # positive
             five[4] = probs[2] * 0.45  # very_positive
             s = float(five.sum())
@@ -304,10 +330,9 @@ class JevClassifier:
 # ---------------------------------------------------------------------------
 # Benchmark
 # ---------------------------------------------------------------------------
-def benchmark(y_true: List[str],
-              y_pred: List[str],
-              y_conf: List[float],
-              y_probs: List[Dict]) -> Dict:
+def benchmark(
+    y_true: List[str], y_pred: List[str], y_conf: List[float], y_probs: List[Dict]
+) -> Dict:
     """Compute a battery of classification + calibration metrics.
 
     Parameters
@@ -334,12 +359,10 @@ def benchmark(y_true: List[str],
     """
     n = len(y_true)
     if not (len(y_pred) == len(y_conf) == len(y_probs) == n):
-        raise ValueError(
-            "y_true, y_pred, y_conf, y_probs must have equal length."
-        )
+        raise ValueError("y_true, y_pred, y_conf, y_probs must have equal length.")
 
     labels = sorted(set(y_true) | set(y_pred))
-    label2idx = {l: i for i, l in enumerate(labels)}
+    label2idx = {label: i for i, label in enumerate(labels)}
     cm = np.zeros((len(labels), len(labels)), dtype=np.int64)
     for t, p in zip(y_true, y_pred):
         if t in label2idx and p in label2idx:
@@ -360,8 +383,7 @@ def benchmark(y_true: List[str],
         prec = tp / (tp + fp) if (tp + fp) else 0.0
         rec = tp / (tp + fn) if (tp + fn) else 0.0
         f1 = 2 * prec * rec / (prec + rec) if (prec + rec) else 0.0
-        per_label[lab] = {"precision": prec, "recall": rec, "f1": f1,
-                          "tp": tp, "fp": fp, "fn": fn}
+        per_label[lab] = {"precision": prec, "recall": rec, "f1": f1, "tp": tp, "fp": fp, "fn": fn}
         precisions.append(prec)
         recalls.append(rec)
         f1s.append(f1)
@@ -373,8 +395,7 @@ def benchmark(y_true: List[str],
     macro_f1 = float(np.mean(f1s)) if f1s else 0.0
     micro_p = tp_total / (tp_total + fp_total) if (tp_total + fp_total) else 0.0
     micro_r = tp_total / (tp_total + fn_total) if (tp_total + fn_total) else 0.0
-    micro_f1 = (2 * micro_p * micro_r / (micro_p + micro_r)
-                if (micro_p + micro_r) else 0.0)
+    micro_f1 = 2 * micro_p * micro_r / (micro_p + micro_r) if (micro_p + micro_r) else 0.0
 
     out: Dict = {
         "n": n,
@@ -393,8 +414,7 @@ def benchmark(y_true: List[str],
     if _HAS_CALIBRATION:
         try:
             out["brier"] = brier_score(y_true, y_probs, labels)
-            out["ece"] = expected_calibration_error(
-                y_true, y_pred, y_conf, n_bins=10)
+            out["ece"] = expected_calibration_error(y_true, y_pred, y_conf, n_bins=10)
             y_correct = [1 if t == p else 0 for t, p in zip(y_true, y_pred)]
             out["reliability"] = reliability_data(y_conf, y_correct, n_bins=10)
         except Exception as exc:  # pragma: no cover - defensive
@@ -412,8 +432,10 @@ def benchmark(y_true: List[str],
         from sklearn.metrics import (  # type: ignore
             precision_recall_fscore_support,
         )
+
         sk_p, sk_r, sk_f, _ = precision_recall_fscore_support(
-            y_true, y_pred, labels=labels, average="macro", zero_division=0)
+            y_true, y_pred, labels=labels, average="macro", zero_division=0
+        )
         out["sklearn_macro"] = {
             "precision": float(sk_p),
             "recall": float(sk_r),

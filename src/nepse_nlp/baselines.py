@@ -23,7 +23,7 @@ from __future__ import annotations
 import hashlib
 import math
 import time
-from typing import Dict, List, Optional, Sequence
+from typing import Dict, List, Sequence
 
 import numpy as np
 
@@ -33,14 +33,38 @@ __all__ = ["ZeroShotBaseline", "run_baselines", "MODEL_PARAMS"]
 # Shared lexicon (kept in sync with jev_benchmark)
 # ---------------------------------------------------------------------------
 POSITIVE_LEXICON: List[str] = [
-    "बढ्यो", "नाफा", "उच्च", "मजबूत", "वृद्धि",
-    "रेकर्ड", "सकारात्मक", "surge", "profit", "growth",
-    "record", "strong", "high", "gain", "rally",
+    "बढ्यो",
+    "नाफा",
+    "उच्च",
+    "मजबूत",
+    "वृद्धि",
+    "रेकर्ड",
+    "सकारात्मक",
+    "surge",
+    "profit",
+    "growth",
+    "record",
+    "strong",
+    "high",
+    "gain",
+    "rally",
 ]
 NEGATIVE_LEXICON: List[str] = [
-    "घट्यो", "घाटा", "नोक्सान", "कमजोर", "गिरावट",
-    "चिन्ता", "loss", "fall", "decline", "weak",
-    "drop", "crash", "worry", "debt", "fraud",
+    "घट्यो",
+    "घाटा",
+    "नोक्सान",
+    "कमजोर",
+    "गिरावट",
+    "चिन्ता",
+    "loss",
+    "fall",
+    "decline",
+    "weak",
+    "drop",
+    "crash",
+    "worry",
+    "debt",
+    "fraud",
 ]
 
 # ---------------------------------------------------------------------------
@@ -80,7 +104,7 @@ MODEL_PARAMS: Dict[str, Dict] = {
 # Guarded sibling imports
 # ---------------------------------------------------------------------------
 try:  # pragma: no cover
-    from nepse_nlp.utils import set_seed, get_logger  # type: ignore
+    from nepse_nlp.utils import get_logger, set_seed  # type: ignore
 except Exception:  # pragma: no cover - stub fallback
     import logging
     import random
@@ -95,18 +119,21 @@ except Exception:  # pragma: no cover - stub fallback
     def get_logger(name: str):
         return logging.getLogger(name)
 
+
 try:  # pragma: no cover
     from nepse_nlp.jev_benchmark import (  # type: ignore
         LABELS_3,
         LABELS_5,
+    )
+    from nepse_nlp.jev_benchmark import (
         benchmark as _jev_benchmark,
     )
+
     _HAS_JEV = True
 except Exception:  # pragma: no cover
     _HAS_JEV = False
     LABELS_3 = ["negative", "neutral", "positive"]
-    LABELS_5 = ["very_negative", "negative", "neutral",
-                "positive", "very_positive"]
+    LABELS_5 = ["very_negative", "negative", "neutral", "positive", "very_positive"]
     _jev_benchmark = None  # type: ignore
 
 
@@ -181,15 +208,16 @@ class ZeroShotBaseline:
     outputs across processes and machines.
     """
 
-    def __init__(self,
-                 model_name: str = "xlm-roberta-large",
-                 labels: Sequence[str] = LABELS_3,
-                 backend: str = "simulated",
-                 seed: int = 42):
+    def __init__(
+        self,
+        model_name: str = "xlm-roberta-large",
+        labels: Sequence[str] = LABELS_3,
+        backend: str = "simulated",
+        seed: int = 42,
+    ):
         if model_name not in MODEL_PARAMS:
             raise ValueError(
-                f"Unknown model_name {model_name!r}; expected one of "
-                f"{list(MODEL_PARAMS)}."
+                f"Unknown model_name {model_name!r}; expected one of {list(MODEL_PARAMS)}."
             )
         self.model_name = model_name
         self.labels = list(labels)
@@ -204,6 +232,7 @@ class ZeroShotBaseline:
         if backend == "transformers":
             try:
                 from transformers import pipeline  # type: ignore
+
                 self._hf_pipeline = pipeline(
                     "zero-shot-classification",
                     model=model_name,
@@ -217,9 +246,7 @@ class ZeroShotBaseline:
                 )
                 self.backend = "simulated"
         elif backend != "simulated":
-            raise ValueError(
-                f"backend must be 'transformers' or 'simulated'; got {backend!r}"
-            )
+            raise ValueError(f"backend must be 'transformers' or 'simulated'; got {backend!r}")
 
     # ----- Simulated backend ---------------------------------------------
     def _simulated_score(self, text: str) -> Dict:
@@ -242,17 +269,17 @@ class ZeroShotBaseline:
 
         logit_pos = (0.5 * pos) / T + bias.get("positive", 0.0) + 0.05 * cm
         logit_neg = (0.5 * neg) / T + bias.get("negative", 0.0) + 0.05 * (1.0 - cm)
-        logit_neu = (0.2 - 0.05 * abs(pos - neg) + 0.002 * L
-                     + bias.get("neutral", 0.0))
+        logit_neu = 0.2 - 0.05 * abs(pos - neg) + 0.002 * L + bias.get("neutral", 0.0)
 
         # Stable per-text noise so output is reproducible.
-        seed_int = (_stable_hash(text) ^ self.seed
-                    ^ _stable_hash(self.model_name)) & 0xFFFFFFFF
+        seed_int = (_stable_hash(text) ^ self.seed ^ _stable_hash(self.model_name)) & 0xFFFFFFFF
         rng = np.random.RandomState(seed_int)
         noise = rng.normal(0.0, std, size=3)
-        logits = [logit_neg + float(noise[0]),
-                  logit_neu + float(noise[1]),
-                  logit_pos + float(noise[2])]
+        logits = [
+            logit_neg + float(noise[0]),
+            logit_neu + float(noise[1]),
+            logit_pos + float(noise[2]),
+        ]
         probs = _softmax(logits)
 
         if len(self.labels) == 5:
@@ -280,12 +307,11 @@ class ZeroShotBaseline:
         if self._hf_pipeline is None:
             raise RuntimeError("transformers backend not initialised")
         out = self._hf_pipeline(text, list(self.labels), multi_label=False)
-        probs = {l: 0.0 for l in self.labels}
+        probs = {label: 0.0 for label in self.labels}
         for lbl, sc in zip(out["labels"], out["scores"]):
             if lbl in probs:
                 probs[lbl] = float(sc)
-        idx = max(range(len(self.labels)),
-                  key=lambda i: probs[self.labels[i]])
+        idx = max(range(len(self.labels)), key=lambda i: probs[self.labels[i]])
         return {
             "label": self.labels[idx],
             "confidence": probs[self.labels[idx]],
@@ -341,10 +367,7 @@ def run_baselines(records: List[Dict], model_names: List[str]) -> Dict:
     """
     out: Dict[str, Dict] = {}
     for name in model_names:
-        clf = ZeroShotBaseline(model_name=name,
-                                labels=LABELS_3,
-                                backend="simulated",
-                                seed=42)
+        clf = ZeroShotBaseline(model_name=name, labels=LABELS_3, backend="simulated", seed=42)
         y_true, y_pred, y_conf, y_probs = [], [], [], []
         for r in records:
             res = clf.classify(r.get("text", ""))
@@ -361,8 +384,8 @@ def run_baselines(records: List[Dict], model_names: List[str]) -> Dict:
                 "brier": m.get("brier"),
             }
         else:  # pragma: no cover - fallback
-            acc = (sum(1 for t, p in zip(y_true, y_pred) if t == p)
-                   / len(y_true)) if y_true else 0.0
-            out[name] = {"accuracy": acc, "f1_macro": 0.0,
-                          "ece": 0.0, "brier": 0.0}
+            acc = (
+                (sum(1 for t, p in zip(y_true, y_pred) if t == p) / len(y_true)) if y_true else 0.0
+            )
+            out[name] = {"accuracy": acc, "f1_macro": 0.0, "ece": 0.0, "brier": 0.0}
     return out

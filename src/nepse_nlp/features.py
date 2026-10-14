@@ -34,7 +34,7 @@ import pandas as pd
 # gracefully to plain stdlib defaults so that this module still imports
 # and can be syntax-checked / unit-tested in isolation.
 try:  # pragma: no cover - import guard
-    from nepse_nlp.utils import set_seed, get_logger, PROCESSED_DIR, MODELS_DIR
+    from nepse_nlp.utils import MODELS_DIR, PROCESSED_DIR, get_logger, set_seed
 
     _LOGGER = get_logger(__name__)
 except Exception:  # pragma: no cover
@@ -201,7 +201,7 @@ def rsi(close: pd.Series, period: int = 14) -> pd.Series:
     # Where avg_loss is 0 (no losses in window) -> RSI = 100.
     rsi_vals = rsi_vals.fillna(100.0)
     # Initial NaNs from warm-up.
-    rsi_vals.iloc[: period] = np.nan
+    rsi_vals.iloc[:period] = np.nan
     return rsi_vals.rename("rsi")
 
 

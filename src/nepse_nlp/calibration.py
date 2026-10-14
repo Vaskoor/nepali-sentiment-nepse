@@ -37,7 +37,7 @@ __all__ = [
 # ---------------------------------------------------------------------------
 def _label_to_index(labels: Sequence[str]) -> Dict[str, int]:
     """Return a stable label->index map."""
-    return {l: i for i, l in enumerate(labels)}
+    return {label: i for i, label in enumerate(labels)}
 
 
 def _one_hot(idx: int, n: int) -> np.ndarray:
@@ -58,9 +58,7 @@ def _bin_mask(conf: np.ndarray, lo: float, hi: float, last: bool) -> np.ndarray:
 # ---------------------------------------------------------------------------
 # Brier score
 # ---------------------------------------------------------------------------
-def brier_score(y_true: List[str],
-                y_probs: List[Dict[str, float]],
-                labels: List[str]) -> float:
+def brier_score(y_true: List[str], y_probs: List[Dict[str, float]], labels: List[str]) -> float:
     """Multiclass Brier score.
 
     For each sample ``i`` with true label ``y_i`` and predicted probabilities
@@ -90,9 +88,7 @@ def brier_score(y_true: List[str],
     if not y_true:
         return 0.0
     if len(y_true) != len(y_probs):
-        raise ValueError(
-            f"y_true ({len(y_true)}) and y_probs ({len(y_probs)}) must align."
-        )
+        raise ValueError(f"y_true ({len(y_true)}) and y_probs ({len(y_probs)}) must align.")
     label2idx = _label_to_index(labels)
     n = len(labels)
     total = 0.0
@@ -101,14 +97,14 @@ def brier_score(y_true: List[str],
             # Skip unknown true labels rather than crash.
             continue
         v = _one_hot(label2idx[yt], n)
-        p = np.array([probs.get(l, 0.0) for l in labels], dtype=np.float64)
+        p = np.array([probs.get(label, 0.0) for label in labels], dtype=np.float64)
         total += float(np.sum((p - v) ** 2))
     return total / len(y_true)
 
 
-def brier_multiclass(y_true: List[str],
-                     y_probs: List[Dict[str, float]],
-                     labels: List[str]) -> float:
+def brier_multiclass(
+    y_true: List[str], y_probs: List[Dict[str, float]], labels: List[str]
+) -> float:
     """Alias of :func:`brier_score` kept for API parity."""
     return brier_score(y_true, y_probs, labels)
 
@@ -116,10 +112,9 @@ def brier_multiclass(y_true: List[str],
 # ---------------------------------------------------------------------------
 # Expected Calibration Error
 # ---------------------------------------------------------------------------
-def expected_calibration_error(y_true: List[str],
-                                y_pred: List[str],
-                                y_conf: List[float],
-                                n_bins: int = 10) -> float:
+def expected_calibration_error(
+    y_true: List[str], y_pred: List[str], y_conf: List[float], n_bins: int = 10
+) -> float:
     """Expected Calibration Error (ECE).
 
     Bins predictions by confidence into ``n_bins`` equal-width bins on
@@ -137,8 +132,7 @@ def expected_calibration_error(y_true: List[str],
         return 0.0
     if not (len(y_pred) == len(y_conf) == n):
         raise ValueError("y_true, y_pred, y_conf must have equal length.")
-    correct = np.array([1.0 if t == p else 0.0 for t, p in zip(y_true, y_pred)],
-                       dtype=np.float64)
+    correct = np.array([1.0 if t == p else 0.0 for t, p in zip(y_true, y_pred)], dtype=np.float64)
     conf = np.asarray(y_conf, dtype=np.float64)
     bins = np.linspace(0.0, 1.0, n_bins + 1)
     ece = 0.0
@@ -156,9 +150,9 @@ def expected_calibration_error(y_true: List[str],
 # ---------------------------------------------------------------------------
 # Reliability data (for reliability diagrams)
 # ---------------------------------------------------------------------------
-def reliability_data(y_conf: List[float],
-                     y_correct: List[int],
-                     n_bins: int = 10) -> Dict[str, List[float]]:
+def reliability_data(
+    y_conf: List[float], y_correct: List[int], n_bins: int = 10
+) -> Dict[str, List[float]]:
     """Return binned reliability-diagram data.
 
     Parameters
@@ -200,8 +194,7 @@ def reliability_data(y_conf: List[float],
             accs.append(float(correct[mask].mean()))
             confs.append(float(conf[mask].mean()))
         counts.append(cnt)
-    return {"bin_centers": centers, "accs": accs,
-            "confs": confs, "counts": counts}
+    return {"bin_centers": centers, "accs": accs, "confs": confs, "counts": counts}
 
 
 # ---------------------------------------------------------------------------
@@ -218,9 +211,7 @@ _FIVE_TO_THREE = {
 _THREE_INT = {"negative": 0, "neutral": 1, "positive": 2}
 
 
-def ordinal_bias(y_true: List[str],
-                 y_pred_3: List[str],
-                 y_pred_5: List[str]) -> Dict[str, float]:
+def ordinal_bias(y_true: List[str], y_pred_3: List[str], y_pred_5: List[str]) -> Dict[str, float]:
     """Compare 3-class predictions vs 5-class predictions collapsed to 3.
 
     Useful for diagnosing whether the 5-class ordinal scale introduces a
@@ -250,8 +241,7 @@ def ordinal_bias(y_true: List[str],
         raise ValueError("y_pred_3 and y_pred_5 must have equal length.")
     n = len(y_pred_3)
     if n == 0:
-        return {"agreement": 0.0, "disagreement": 0.0,
-                "mean_distance": 0.0, "n": 0}
+        return {"agreement": 0.0, "disagreement": 0.0, "mean_distance": 0.0, "n": 0}
     agree = 0
     dist_sum = 0.0
     for p3, p5 in zip(y_pred_3, y_pred_5):

@@ -27,7 +27,7 @@ __all__ = ["HybridPipeline"]
 # Guarded sibling imports
 # ---------------------------------------------------------------------------
 try:  # pragma: no cover
-    from nepse_nlp.utils import set_seed, get_logger  # type: ignore
+    from nepse_nlp.utils import get_logger, set_seed  # type: ignore
 except Exception:  # pragma: no cover - stub fallback
     import logging
     import random
@@ -42,8 +42,11 @@ except Exception:  # pragma: no cover - stub fallback
     def get_logger(name: str):
         return logging.getLogger(name)
 
+
 try:  # pragma: no cover
-    from nepse_nlp.jev_benchmark import JevClassifier, benchmark as _bench  # type: ignore
+    from nepse_nlp.jev_benchmark import JevClassifier  # type: ignore
+    from nepse_nlp.jev_benchmark import benchmark as _bench
+
     _HAS_JEV = True
 except Exception:  # pragma: no cover
     _HAS_JEV = False
@@ -51,6 +54,7 @@ except Exception:  # pragma: no cover
 
 try:  # pragma: no cover
     from nepse_nlp.baselines import ZeroShotBaseline  # type: ignore
+
     _HAS_BASELINES = True
 except Exception:  # pragma: no cover
     _HAS_BASELINES = False
@@ -58,6 +62,7 @@ except Exception:  # pragma: no cover
 
 try:  # pragma: no cover
     from nepse_nlp.conformal import ConformalGate  # type: ignore
+
     _HAS_CONFORMAL = True
 except Exception:  # pragma: no cover
     _HAS_CONFORMAL = False
@@ -91,12 +96,14 @@ class HybridPipeline:
         USD per call for the fast and slow models, used for cost accounting.
     """
 
-    def __init__(self,
-                 fast_model: Any,
-                 escalation_model: Any = None,
-                 threshold: float = 0.7,
-                 cost_fast: float = 0.0002,
-                 cost_slow: float = 0.005):
+    def __init__(
+        self,
+        fast_model: Any,
+        escalation_model: Any = None,
+        threshold: float = 0.7,
+        cost_fast: float = 0.0002,
+        cost_slow: float = 0.005,
+    ):
         if fast_model is None:
             raise ValueError("fast_model must be provided")
         self.fast_model = fast_model
@@ -104,8 +111,7 @@ class HybridPipeline:
             if _HAS_BASELINES and ZeroShotBaseline is not None:
                 escalation_model = ZeroShotBaseline(
                     model_name="xlm-roberta-large",
-                    labels=getattr(fast_model, "labels",
-                                    ["negative", "neutral", "positive"]),
+                    labels=getattr(fast_model, "labels", ["negative", "neutral", "positive"]),
                     backend="simulated",
                 )
             else:
@@ -122,9 +128,7 @@ class HybridPipeline:
         self.logger = get_logger("nepse_nlp.hybrid_pipeline")
 
     # ----- Conformal gate ------------------------------------------------
-    def set_conformal_gate(self,
-                           val_scores: "numpy.ndarray",
-                           alpha: float = 0.1) -> "HybridPipeline":
+    def set_conformal_gate(self, val_scores: "np.ndarray", alpha: float = 0.1) -> "HybridPipeline":
         """Calibrate a conformal escalation gate on validation scores.
 
         Convention: ``val_scores`` are fast-model *confidences* (higher =
@@ -139,13 +143,10 @@ class HybridPipeline:
             ``self`` for fluent chaining.
         """
         if not _HAS_CONFORMAL or ConformalGate is None:
-            raise RuntimeError(
-                "conformal module unavailable; cannot set a gate."
-            )
+            raise RuntimeError("conformal module unavailable; cannot set a gate.")
         self.gate = ConformalGate(alpha=alpha)
         self.gate.fit(val_scores)
-        self.logger.info("Conformal gate fit; threshold=%.4f",
-                         self.gate.threshold())
+        self.logger.info("Conformal gate fit; threshold=%.4f", self.gate.threshold())
         return self
 
     # ----- Prediction ----------------------------------------------------
@@ -225,8 +226,7 @@ class HybridPipeline:
         metrics: Dict[str, Any] = {
             "n": len(records),
             "threshold": float(self.threshold),
-            "accuracy": (sum(1 for t, p in zip(y_true, y_pred) if t == p)
-                         / n) if n else 0.0,
+            "accuracy": (sum(1 for t, p in zip(y_true, y_pred) if t == p) / n) if n else 0.0,
             "escalation_rate": n_esc / n,
             "avg_cost_per_1k": (total_cost / n) * 1000.0,
             "avg_latency_ms": total_latency / n,
@@ -263,21 +263,22 @@ class HybridPipeline:
         for th in DEFAULT_THRESHOLDS:
             self.threshold = float(th)
             ev = self._aggregate(records)
-            sweep.append({
-                "threshold": float(th),
-                "accuracy": ev["accuracy"],
-                "cost_per_1k": ev["avg_cost_per_1k"],
-                "escalation_rate": ev["escalation_rate"],
-            })
+            sweep.append(
+                {
+                    "threshold": float(th),
+                    "accuracy": ev["accuracy"],
+                    "cost_per_1k": ev["avg_cost_per_1k"],
+                    "escalation_rate": ev["escalation_rate"],
+                }
+            )
         self.threshold = original
         metrics["sweep"] = sweep
         return metrics
 
     # ----- Pareto frontier ---------------------------------------------
-    def pareto_frontier(self,
-                        records: List[Dict],
-                        thresholds: Optional[List[float]] = None
-                        ) -> List[Dict]:
+    def pareto_frontier(
+        self, records: List[Dict], thresholds: Optional[List[float]] = None
+    ) -> List[Dict]:
         """Sweep confidence thresholds and return the Pareto-dominated filter.
 
         Parameters
@@ -300,12 +301,14 @@ class HybridPipeline:
         for th in thresholds:
             self.threshold = float(th)
             ev = self._aggregate(records)
-            points.append({
-                "threshold": float(th),
-                "accuracy": ev["accuracy"],
-                "cost_per_1k": ev["avg_cost_per_1k"],
-                "escalation_rate": ev["escalation_rate"],
-            })
+            points.append(
+                {
+                    "threshold": float(th),
+                    "accuracy": ev["accuracy"],
+                    "cost_per_1k": ev["avg_cost_per_1k"],
+                    "escalation_rate": ev["escalation_rate"],
+                }
+            )
         self.threshold = original
 
         # Pareto filter (maximise accuracy, minimise cost).
@@ -315,10 +318,11 @@ class HybridPipeline:
             for q in points:
                 if q is p:
                     continue
-                if (q["accuracy"] >= p["accuracy"]
-                        and q["cost_per_1k"] <= p["cost_per_1k"]
-                        and (q["accuracy"] > p["accuracy"]
-                             or q["cost_per_1k"] < p["cost_per_1k"])):
+                if (
+                    q["accuracy"] >= p["accuracy"]
+                    and q["cost_per_1k"] <= p["cost_per_1k"]
+                    and (q["accuracy"] > p["accuracy"] or q["cost_per_1k"] < p["cost_per_1k"])
+                ):
                     dominated = True
                     break
             if not dominated:

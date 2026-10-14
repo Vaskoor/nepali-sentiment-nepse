@@ -28,12 +28,13 @@ if _SRC not in sys.path:
 
 import numpy as np  # noqa: E402
 
-from nepse_nlp.jev_benchmark import JevClassifier  # noqa: E402
 from nepse_nlp.baselines import ZeroShotBaseline  # noqa: E402
 from nepse_nlp.hybrid_pipeline import HybridPipeline  # noqa: E402
+from nepse_nlp.jev_benchmark import JevClassifier  # noqa: E402
 
 try:  # pragma: no cover - depends on scraper module presence
     from nepse_nlp.scraper import simulated_headlines  # type: ignore
+
     _HAS_SCRAPER = True
 except Exception:  # pragma: no cover
     _HAS_SCRAPER = False
@@ -41,30 +42,62 @@ except Exception:  # pragma: no cover
 
 def _fallback_headlines():
     return [
-        {"text": "नेपाली बैंकले नाफा बढ्यो रेकर्ड सकारात्मक",
-         "y_true": "positive", "sector": "banking",
-         "code_mix_ratio": 0.0, "length": 7},
-        {"text": "नेप्से गिरावट घट्यो चिन्ता",
-         "y_true": "negative", "sector": "index",
-         "code_mix_ratio": 0.0, "length": 5},
-        {"text": "profit surge growth strong record high",
-         "y_true": "positive", "sector": "index",
-         "code_mix_ratio": 1.0, "length": 6},
-        {"text": "loss fall decline weak drop crash worry",
-         "y_true": "negative", "sector": "index",
-         "code_mix_ratio": 1.0, "length": 7},
-        {"text": "बजार स्थिर रह्यो कुनै ठूलो परिवर्तन छैन",
-         "y_true": "neutral", "sector": "index",
-         "code_mix_ratio": 0.0, "length": 7},
-        {"text": "hydropower company shares profit growth",
-         "y_true": "positive", "sector": "hydropower",
-         "code_mix_ratio": 1.0, "length": 5},
-        {"text": "घरजगाना कमजोर नोक्सान चिन्ता",
-         "y_true": "negative", "sector": "finance",
-         "code_mix_ratio": 0.0, "length": 4},
-        {"text": "insurance sector mixed performance today",
-         "y_true": "neutral", "sector": "insurance",
-         "code_mix_ratio": 1.0, "length": 5},
+        {
+            "text": "नेपाली बैंकले नाफा बढ्यो रेकर्ड सकारात्मक",
+            "y_true": "positive",
+            "sector": "banking",
+            "code_mix_ratio": 0.0,
+            "length": 7,
+        },
+        {
+            "text": "नेप्से गिरावट घट्यो चिन्ता",
+            "y_true": "negative",
+            "sector": "index",
+            "code_mix_ratio": 0.0,
+            "length": 5,
+        },
+        {
+            "text": "profit surge growth strong record high",
+            "y_true": "positive",
+            "sector": "index",
+            "code_mix_ratio": 1.0,
+            "length": 6,
+        },
+        {
+            "text": "loss fall decline weak drop crash worry",
+            "y_true": "negative",
+            "sector": "index",
+            "code_mix_ratio": 1.0,
+            "length": 7,
+        },
+        {
+            "text": "बजार स्थिर रह्यो कुनै ठूलो परिवर्तन छैन",
+            "y_true": "neutral",
+            "sector": "index",
+            "code_mix_ratio": 0.0,
+            "length": 7,
+        },
+        {
+            "text": "hydropower company shares profit growth",
+            "y_true": "positive",
+            "sector": "hydropower",
+            "code_mix_ratio": 1.0,
+            "length": 5,
+        },
+        {
+            "text": "घरजगाना कमजोर नोक्सान चिन्ता",
+            "y_true": "negative",
+            "sector": "finance",
+            "code_mix_ratio": 0.0,
+            "length": 4,
+        },
+        {
+            "text": "insurance sector mixed performance today",
+            "y_true": "neutral",
+            "sector": "insurance",
+            "code_mix_ratio": 1.0,
+            "length": 5,
+        },
     ]
 
 
@@ -81,25 +114,20 @@ def _load_headlines():
         if isinstance(r, str):
             r = {"text": r, "y_true": "neutral"}
         # Field-name compatibility shim (see phase2_benchmark.py).
-        text = (r.get("text")
-                or r.get("headline")
-                or r.get("title")
-                or r.get("summary")
-                or "")
+        text = r.get("text") or r.get("headline") or r.get("title") or r.get("summary") or ""
         summary = r.get("summary")
         if summary and summary != text:
             text = f"{text}. {summary}"
-        y_true = (r.get("y_true")
-                  or r.get("true_label")
-                  or r.get("label")
-                  or "neutral")
-        norm.append({
-            "text": text,
-            "y_true": y_true,
-            "sector": r.get("sector", "unknown"),
-            "code_mix_ratio": r.get("code_mix_ratio", 0.0),
-            "length": r.get("length", len(text.split())),
-        })
+        y_true = r.get("y_true") or r.get("true_label") or r.get("label") or "neutral"
+        norm.append(
+            {
+                "text": text,
+                "y_true": y_true,
+                "sector": r.get("sector", "unknown"),
+                "code_mix_ratio": r.get("code_mix_ratio", 0.0),
+                "length": r.get("length", len(text.split())),
+            }
+        )
     return norm
 
 
@@ -115,14 +143,11 @@ def main():
     test_records = records[n_val:]
 
     fast = JevClassifier(backend="simulated", seed=42)
-    esc = ZeroShotBaseline(model_name="xlm-roberta-large",
-                           backend="simulated", seed=42)
+    esc = ZeroShotBaseline(model_name="xlm-roberta-large", backend="simulated", seed=42)
 
-    pipe = HybridPipeline(fast_model=fast,
-                          escalation_model=esc,
-                          threshold=0.7,
-                          cost_fast=0.0002,
-                          cost_slow=0.005)
+    pipe = HybridPipeline(
+        fast_model=fast, escalation_model=esc, threshold=0.7, cost_fast=0.0002, cost_slow=0.005
+    )
 
     # ----- Pareto frontier (gate-free sweep) ---------------------------
     pareto = pipe.pareto_frontier(test_records)
@@ -134,8 +159,7 @@ def main():
     # ----- Conformal gate calibration ---------------------------------
     # Use the fast model's confidence on the validation split as the
     # calibration score (higher = better). Threshold = (1-alpha) quantile.
-    val_conf = np.array([fast.classify(r["text"])["confidence"]
-                         for r in val_records])
+    val_conf = np.array([fast.classify(r["text"])["confidence"] for r in val_records])
     conformal_threshold = None
     try:
         pipe.set_conformal_gate(val_conf, alpha=0.1)
@@ -172,9 +196,10 @@ def main():
     print("# Phase 3 - Confidence-Gated Hybrid Pipeline\n")
     print(f"Records: total={n} val={n_val} test={len(test_records)}\n")
     if conformal_threshold is not None:
-        print(f"Conformal gate threshold (alpha=0.1, on val confidences): "
-              f"{conformal_threshold:.4f}\n")
-    print(f"Default @ threshold=0.7:")
+        print(
+            f"Conformal gate threshold (alpha=0.1, on val confidences): {conformal_threshold:.4f}\n"
+        )
+    print("Default @ threshold=0.7:")
     print(f"  accuracy        = {eval_default['accuracy']:.4f}")
     print(f"  escalation rate = {eval_default['escalation_rate']:.4f}")
     print(f"  avg cost / 1k   = ${eval_default['avg_cost_per_1k']:.4f}")
@@ -184,15 +209,19 @@ def main():
     print("| Threshold | Accuracy | Cost/1k ($) | Escalation rate |")
     print("|---|---|---|---|")
     for p in pareto:
-        print(f"| {p['threshold']:.2f} | {p['accuracy']:.4f} | "
-              f"{p['cost_per_1k']:.4f} | {p['escalation_rate']:.4f} |")
+        print(
+            f"| {p['threshold']:.2f} | {p['accuracy']:.4f} | "
+            f"{p['cost_per_1k']:.4f} | {p['escalation_rate']:.4f} |"
+        )
 
     print("\n## Full threshold sweep\n")
     print("| Threshold | Accuracy | Cost/1k ($) | Escalation rate |")
     print("|---|---|---|---|")
     for p in sweep:
-        print(f"| {p['threshold']:.2f} | {p['accuracy']:.4f} | "
-              f"{p['cost_per_1k']:.4f} | {p['escalation_rate']:.4f} |")
+        print(
+            f"| {p['threshold']:.2f} | {p['accuracy']:.4f} | "
+            f"{p['cost_per_1k']:.4f} | {p['escalation_rate']:.4f} |"
+        )
 
     print(f"\nResults written to: {out_path}")
 

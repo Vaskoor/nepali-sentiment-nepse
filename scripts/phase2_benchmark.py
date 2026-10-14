@@ -28,19 +28,19 @@ _SRC = os.path.normpath(os.path.join(_HERE, "..", "src"))
 if _SRC not in sys.path:
     sys.path.insert(0, _SRC)
 
-import numpy as np  # noqa: E402
 
+from nepse_nlp.baselines import run_baselines  # noqa: E402
 from nepse_nlp.jev_benchmark import (  # noqa: E402
     JevClassifier,
     benchmark,
     stratified_analysis,
 )
-from nepse_nlp.baselines import run_baselines  # noqa: E402
 
 # Optional: prefer the scraper's simulated headlines; fall back to a small
 # local set if the scraper module is not yet available.
 try:  # pragma: no cover - depends on scraper module presence
     from nepse_nlp.scraper import simulated_headlines  # type: ignore
+
     _HAS_SCRAPER = True
 except Exception:  # pragma: no cover
     _HAS_SCRAPER = False
@@ -54,30 +54,62 @@ except Exception:  # pragma: no cover
 # ---------------------------------------------------------------------------
 def _fallback_headlines():
     return [
-        {"text": "नेपाली बैंकले नाफा बढ्यो रेकर्ड सकारात्मक",
-         "y_true": "positive", "sector": "banking",
-         "code_mix_ratio": 0.0, "length": 7},
-        {"text": "नेप्से गिरावट घट्यो चिन्ता",
-         "y_true": "negative", "sector": "index",
-         "code_mix_ratio": 0.0, "length": 5},
-        {"text": "profit surge growth strong record high",
-         "y_true": "positive", "sector": "index",
-         "code_mix_ratio": 1.0, "length": 6},
-        {"text": "loss fall decline weak drop crash worry",
-         "y_true": "negative", "sector": "index",
-         "code_mix_ratio": 1.0, "length": 7},
-        {"text": "बजार स्थिर रह्यो कुनै ठूलो परिवर्तन छैन",
-         "y_true": "neutral", "sector": "index",
-         "code_mix_ratio": 0.0, "length": 7},
-        {"text": "hydropower company shares profit growth",
-         "y_true": "positive", "sector": "hydropower",
-         "code_mix_ratio": 1.0, "length": 5},
-        {"text": "घरजगाना कमजोर नोक्सान चिन्ता",
-         "y_true": "negative", "sector": "finance",
-         "code_mix_ratio": 0.0, "length": 4},
-        {"text": "insurance sector mixed performance today",
-         "y_true": "neutral", "sector": "insurance",
-         "code_mix_ratio": 1.0, "length": 5},
+        {
+            "text": "नेपाली बैंकले नाफा बढ्यो रेकर्ड सकारात्मक",
+            "y_true": "positive",
+            "sector": "banking",
+            "code_mix_ratio": 0.0,
+            "length": 7,
+        },
+        {
+            "text": "नेप्से गिरावट घट्यो चिन्ता",
+            "y_true": "negative",
+            "sector": "index",
+            "code_mix_ratio": 0.0,
+            "length": 5,
+        },
+        {
+            "text": "profit surge growth strong record high",
+            "y_true": "positive",
+            "sector": "index",
+            "code_mix_ratio": 1.0,
+            "length": 6,
+        },
+        {
+            "text": "loss fall decline weak drop crash worry",
+            "y_true": "negative",
+            "sector": "index",
+            "code_mix_ratio": 1.0,
+            "length": 7,
+        },
+        {
+            "text": "बजार स्थिर रह्यो कुनै ठूलो परिवर्तन छैन",
+            "y_true": "neutral",
+            "sector": "index",
+            "code_mix_ratio": 0.0,
+            "length": 7,
+        },
+        {
+            "text": "hydropower company shares profit growth",
+            "y_true": "positive",
+            "sector": "hydropower",
+            "code_mix_ratio": 1.0,
+            "length": 5,
+        },
+        {
+            "text": "घरजगाना कमजोर नोक्सान चिन्ता",
+            "y_true": "negative",
+            "sector": "finance",
+            "code_mix_ratio": 0.0,
+            "length": 4,
+        },
+        {
+            "text": "insurance sector mixed performance today",
+            "y_true": "neutral",
+            "sector": "insurance",
+            "code_mix_ratio": 1.0,
+            "length": 5,
+        },
     ]
 
 
@@ -98,27 +130,22 @@ def _load_headlines():
         # Field-name compatibility shim: the scraper's simulated headlines
         # use ``title``/``summary``/``true_label``, other generators use
         # ``text``/``headline``/``y_true``/``label``.
-        text = (r.get("text")
-                or r.get("headline")
-                or r.get("title")
-                or r.get("summary")
-                or "")
+        text = r.get("text") or r.get("headline") or r.get("title") or r.get("summary") or ""
         # If a separate summary exists, append it so the classifier sees
         # both the headline and the summary body.
         summary = r.get("summary")
         if summary and summary != text:
             text = f"{text}. {summary}"
-        y_true = (r.get("y_true")
-                  or r.get("true_label")
-                  or r.get("label")
-                  or "neutral")
-        norm.append({
-            "text": text,
-            "y_true": y_true,
-            "sector": r.get("sector", "unknown"),
-            "code_mix_ratio": r.get("code_mix_ratio", 0.0),
-            "length": r.get("length", len(text.split())),
-        })
+        y_true = r.get("y_true") or r.get("true_label") or r.get("label") or "neutral"
+        norm.append(
+            {
+                "text": text,
+                "y_true": y_true,
+                "sector": r.get("sector", "unknown"),
+                "code_mix_ratio": r.get("code_mix_ratio", 0.0),
+                "length": r.get("length", len(text.split())),
+            }
+        )
     return norm
 
 
@@ -142,10 +169,7 @@ def main():
 
     # ----- Stratified analysis ----------------------------------------
     strat_records = [
-        {**r,
-         "y_pred": y_pred[i],
-         "y_conf": y_conf[i],
-         "y_probs": y_probs[i]}
+        {**r, "y_pred": y_pred[i], "y_conf": y_conf[i], "y_probs": y_probs[i]}
         for i, r in enumerate(records)
     ]
     strat_cm = stratified_analysis(strat_records, by="code_mix_bin")
@@ -180,14 +204,17 @@ def main():
     print("# Phase 2 - Jev Zero-Shot Benchmark\n")
     print(f"Records: {len(records)} (simulated Nepali financial headlines)\n")
 
-    rows = [("jev (simulated)",
-             results["jev"]["accuracy"],
-             results["jev"]["f1_macro"],
-             results["jev"]["ece"],
-             results["jev"]["brier"])]
+    rows = [
+        (
+            "jev (simulated)",
+            results["jev"]["accuracy"],
+            results["jev"]["f1_macro"],
+            results["jev"]["ece"],
+            results["jev"]["brier"],
+        )
+    ]
     for name, m in baseline_metrics.items():
-        rows.append((name, m["accuracy"], m["f1_macro"],
-                     m["ece"], m["brier"]))
+        rows.append((name, m["accuracy"], m["f1_macro"], m["ece"], m["brier"]))
     print("| Model | Accuracy | F1 (macro) | ECE | Brier |")
     print("|---|---|---|---|---|")
     for r in rows:
@@ -202,8 +229,7 @@ def main():
     for k, m in strat_cm.items():
         ece = "n/a" if m["ece"] is None else f"{m['ece']:.4f}"
         brier = "n/a" if m["brier"] is None else f"{m['brier']:.4f}"
-        print(f"| {k} | {m['n']} | {m['accuracy']:.4f} | "
-              f"{m['f1_macro']:.4f} | {ece} | {brier} |")
+        print(f"| {k} | {m['n']} | {m['accuracy']:.4f} | {m['f1_macro']:.4f} | {ece} | {brier} |")
 
     print("\n## Stratified by sector (Jev)\n")
     print("| Sector | n | Accuracy | F1 (macro) | ECE | Brier |")
@@ -211,8 +237,7 @@ def main():
     for k, m in strat_sec.items():
         ece = "n/a" if m["ece"] is None else f"{m['ece']:.4f}"
         brier = "n/a" if m["brier"] is None else f"{m['brier']:.4f}"
-        print(f"| {k} | {m['n']} | {m['accuracy']:.4f} | "
-              f"{m['f1_macro']:.4f} | {ece} | {brier} |")
+        print(f"| {k} | {m['n']} | {m['accuracy']:.4f} | {m['f1_macro']:.4f} | {ece} | {brier} |")
 
     print(f"\nResults written to: {out_path}")
 

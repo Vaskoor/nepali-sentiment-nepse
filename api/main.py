@@ -70,18 +70,21 @@ except Exception:  # pragma: no cover - optional dep
         def middleware(self, *args, **kwargs):
             def _wrap(fn):
                 return fn
+
             return _wrap
 
         def get(self, path, *args, **kwargs):
             def _wrap(fn):
                 self.routes[("GET", path)] = fn
                 return fn
+
             return _wrap
 
         def post(self, path, *args, **kwargs):
             def _wrap(fn):
                 self.routes[("POST", path)] = fn
                 return fn
+
             return _wrap
 
     class HTTPException(Exception):  # type: ignore[no-redef]
@@ -134,9 +137,11 @@ _PIPELINE_CACHE: Dict[str, Any] = {}
 def _get_logger():  # pragma: no cover - thin wrapper
     try:
         from nepse_nlp.utils import get_logger
+
         return get_logger("api")
     except Exception:
         import logging
+
         return logging.getLogger("api")
 
 
@@ -151,8 +156,8 @@ def _load_pipeline():
         from nepse_nlp.jev_benchmark import JevClassifier  # lazy
     except Exception as exc:  # pragma: no cover - depends on env
         _get_logger().warning(
-            "HybridPipeline / JevClassifier unavailable: %s -- "
-            "degrading /sentiment endpoint.", exc,
+            "HybridPipeline / JevClassifier unavailable: %s -- degrading /sentiment endpoint.",
+            exc,
         )
         _PIPELINE_CACHE["pipeline"] = None
         return None
@@ -178,6 +183,7 @@ def _load_predictor():
     # and let it be retrained on first request.
     try:
         from nepse_nlp.prediction import NEPSEPredictor  # lazy
+
         predictor = NEPSEPredictor(model_type="xgboost", target="direction")
     except Exception as exc:  # pragma: no cover - depends on env
         _get_logger().warning("Predictor construction failed: %s", exc)
@@ -256,11 +262,13 @@ def sentiment(req: SentimentRequest) -> SentimentResponse:
             result.get("label") if isinstance(result, dict) else getattr(result, "label", "unknown")
         )
         confidence = float(
-            result.get("confidence", 0.0) if isinstance(result, dict)
+            result.get("confidence", 0.0)
+            if isinstance(result, dict)
             else getattr(result, "confidence", 0.0)
         )
         source = (
-            result.get("source", "hybrid") if isinstance(result, dict)
+            result.get("source", "hybrid")
+            if isinstance(result, dict)
             else getattr(result, "source", "hybrid")
         )
         escalated = source == "escalated"
@@ -308,8 +316,7 @@ def metrics() -> Dict[str, Any]:
     # Cost estimate: escalation => Jev-escalated (costly) call;
     # assume $0.0001 per escalation + flat $0.00001 per request.
     est_cost_per_1k = (
-        0.00001 * 1000  # base compute
-        + (esc / max(n, 1)) * 0.0001 * 1000  # escalated share
+        0.00001 * 1000 + (esc / max(n, 1)) * 0.0001 * 1000  # base compute  # escalated share
     )
     return {
         "requests": n,

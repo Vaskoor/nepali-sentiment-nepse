@@ -27,14 +27,14 @@ Copyright (c) 2025 Nepali Sentiment NEPSE Research Project
 
 from __future__ import annotations
 
-from typing import Optional, Union
+from typing import Optional
 
 import numpy as np
 
 __all__ = ["calibrate_conformal", "ConformalGate"]
 
 
-def calibrate_conformal(scores: "numpy.ndarray", alpha: float = 0.1) -> float:
+def calibrate_conformal(scores: "np.ndarray", alpha: float = 0.1) -> float:
     """Return the ``(1 - alpha)`` quantile of ``scores``.
 
     Parameters
@@ -81,7 +81,7 @@ class ConformalGate:
         self.alpha = float(alpha)
         self._threshold: Optional[float] = None
 
-    def fit(self, val_scores: "numpy.ndarray") -> "ConformalGate":
+    def fit(self, val_scores: "np.ndarray") -> "ConformalGate":
         """Calibrate the threshold on validation scores.
 
         Parameters

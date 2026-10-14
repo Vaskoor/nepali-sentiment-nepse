@@ -27,13 +27,12 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import LogisticRegression, LinearRegression
-from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.metrics import (
-    accuracy_score,
     mean_absolute_error,
     mean_squared_error,
 )
+from sklearn.preprocessing import StandardScaler
 
 # Lazy / guarded torch import.
 try:  # pragma: no cover - optional dep
@@ -57,7 +56,7 @@ except Exception:  # pragma: no cover
 
 # Lazy / shared utils import.
 try:  # pragma: no cover
-    from nepse_nlp.utils import set_seed, get_logger
+    from nepse_nlp.utils import get_logger, set_seed
 
     _LOGGER = get_logger(__name__)
 except Exception:  # pragma: no cover
@@ -98,8 +97,7 @@ class _LSTMClassifier(nn.Module if _TORCH_AVAILABLE else object):  # type: ignor
         if not _TORCH_AVAILABLE:  # pragma: no cover
             raise RuntimeError("torch is required for the LSTM model")
         super().__init__()
-        self.lstm = nn.LSTM(input_size=n_features, hidden_size=hidden,
-                            batch_first=True)
+        self.lstm = nn.LSTM(input_size=n_features, hidden_size=hidden, batch_first=True)
         self.fc = nn.Linear(hidden, n_classes)
 
     def forward(self, x):  # type: ignore[no-untyped-def]
@@ -184,13 +182,9 @@ class NEPSEPredictor:
         seed: int = 42,
     ) -> None:
         if model_type not in self._VALID_MODELS:
-            raise ValueError(
-                f"model_type must be in {self._VALID_MODELS}; got {model_type!r}"
-            )
+            raise ValueError(f"model_type must be in {self._VALID_MODELS}; got {model_type!r}")
         if target not in self._VALID_TARGETS:
-            raise ValueError(
-                f"target must be in {self._VALID_TARGETS}; got {target!r}"
-            )
+            raise ValueError(f"target must be in {self._VALID_TARGETS}; got {target!r}")
 
         set_seed(seed)
         self.seed = seed
@@ -279,7 +273,9 @@ class NEPSEPredictor:
                 raise RuntimeError("torch is not available")
             # Build the LSTM lazily; class count derived from y in fit.
             self._lstm = _LSTMClassifier(
-                n_features=n_features, hidden=32, n_classes=3,
+                n_features=n_features,
+                hidden=32,
+                n_classes=3,
             )
             return self._lstm
         raise ValueError(f"Unknown model_type {self.model_type!r}")
@@ -361,7 +357,9 @@ class NEPSEPredictor:
         n_classes = int(self._classes_.size) if self._classes_ is not None else 3
         # Rebuild LSTM with the right class count.
         self._lstm = _LSTMClassifier(
-            n_features=n_features, hidden=32, n_classes=n_classes,
+            n_features=n_features,
+            hidden=32,
+            n_classes=n_classes,
         )
         optim = torch.optim.Adam(self._lstm.parameters(), lr=1e-3)
         loss_fn = nn.CrossEntropyLoss()
@@ -371,7 +369,7 @@ class NEPSEPredictor:
         for _ in range(n_epochs):
             perm = torch.randperm(n_samples)
             for b in range(0, n_samples, batch_size):
-                batch_idx = perm[b:b + batch_size]
+                batch_idx = perm[b : b + batch_size]
                 xb = X_t[batch_idx]
                 yb = y_t[batch_idx]
                 optim.zero_grad()
@@ -457,8 +455,8 @@ class NEPSEPredictor:
                 importance = np.abs(coef).sum(axis=0)
             else:
                 coef = getattr(self.model, "coef_", None)
-                importance = np.abs(coef).ravel() if coef is not None else np.zeros(
-                    len(self.feature_names_)
+                importance = (
+                    np.abs(coef).ravel() if coef is not None else np.zeros(len(self.feature_names_))
                 )
             return dict(zip(self.feature_names_, map(float, importance)))
         if self.model_type == "lstm":
@@ -506,9 +504,7 @@ def walk_forward(
         ``hit_rate``.
     """
     if df is None or len(df) < min_train + 1:
-        raise ValueError(
-            f"Need at least {min_train + 1} rows; got {0 if df is None else len(df)}"
-        )
+        raise ValueError(f"Need at least {min_train + 1} rows; got {0 if df is None else len(df)}")
 
     feature_cols = df.attrs.get(
         "feature_cols",
@@ -535,7 +531,9 @@ def walk_forward(
 
         try:
             model = NEPSEPredictor(
-                model_type=model_type, target=target, seed=seed,
+                model_type=model_type,
+                target=target,
+                seed=seed,
             )
             model.fit(X_train, y_train)
             y_hat = float(model.predict(X_test)[0])
@@ -564,9 +562,7 @@ def walk_forward(
         else:
             metrics["directional_accuracy"] = 0.0
         # Hit rate: fraction of correct (rounded) sign predictions.
-        metrics["hit_rate"] = float(
-            (signed_pred == signed_act).sum() / max(len(signed_act), 1)
-        )
+        metrics["hit_rate"] = float((signed_pred == signed_act).sum() / max(len(signed_act), 1))
     else:
         metrics["rmse"] = float("nan")
         metrics["mae"] = float("nan")
@@ -652,18 +648,23 @@ def ablation_sentiment_vs_baseline(
             "delta_directional_accuracy": float,
         }``
     """
-    feature_cols: List[str] = list(df.attrs.get(
-        "feature_cols",
-        [c for c in df.columns if c not in {"next_ret", "next_dir"}],
-    ))
+    feature_cols: List[str] = list(
+        df.attrs.get(
+            "feature_cols",
+            [c for c in df.columns if c not in {"next_ret", "next_dir"}],
+        )
+    )
     sent_cols = [c for c in feature_cols if c.startswith(_SENTIMENT_PREFIX)]
     base_cols = [c for c in feature_cols if not c.startswith(_SENTIMENT_PREFIX)]
 
     # If no sentiment columns are present, the ablation is trivial.
     if not sent_cols:
         res_full = walk_forward(
-            df=df, model_type=model_type, target=target,
-            min_train=min_train, step=step,
+            df=df,
+            model_type=model_type,
+            target=target,
+            min_train=min_train,
+            step=step,
         )
         return {
             "with_sentiment": res_full["metrics"],
@@ -679,16 +680,21 @@ def ablation_sentiment_vs_baseline(
     df_base.attrs["feature_cols"] = base_cols
 
     res_full = walk_forward(
-        df=df_full, model_type=model_type, target=target,
-        min_train=min_train, step=step,
+        df=df_full,
+        model_type=model_type,
+        target=target,
+        min_train=min_train,
+        step=step,
     )
     res_base = walk_forward(
-        df=df_base, model_type=model_type, target=target,
-        min_train=min_train, step=step,
+        df=df_base,
+        model_type=model_type,
+        target=target,
+        min_train=min_train,
+        step=step,
     )
     delta = (
-        res_full["metrics"]["directional_accuracy"]
-        - res_base["metrics"]["directional_accuracy"]
+        res_full["metrics"]["directional_accuracy"] - res_base["metrics"]["directional_accuracy"]
     )
     return {
         "with_sentiment": res_full["metrics"],

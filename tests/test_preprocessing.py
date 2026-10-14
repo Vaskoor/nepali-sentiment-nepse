@@ -25,8 +25,8 @@ Tests run without installing the package by inserting ``src/`` onto
 ``sys.path`` at collection time.
 """
 
-import sys
 import pathlib
+import sys
 
 # Make ``nepse_nlp`` importable from the repo's ``src/`` directory without an
 # install step.  This mirrors the pattern used by scripts/phase1_preprocess.py.
@@ -34,25 +34,25 @@ _REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_REPO_ROOT / "src"))
 
 from nepse_nlp.data_preprocessing import (  # noqa: E402
-    normalize_devanagari,
-    clean_text,
-    tokenize_nepali,
-    remove_stopwords,
-    detect_code_mix,
-    preprocess_pipeline,
     STOPWORDS_NE,
+    clean_text,
+    detect_code_mix,
+    normalize_devanagari,
+    preprocess_pipeline,
+    remove_stopwords,
+    tokenize_nepali,
 )
 
 
 def test_normalize_idempotent_and_strips_zwsp() -> None:
     """Normalizing twice == normalizing once; zero-width chars are removed."""
-    raw = "नेपाल\u200B शेयर\u200C बजार\u200D"
+    raw = "नेपाल\u200b शेयर\u200c बजार\u200d"
     once = normalize_devanagari(raw)
     twice = normalize_devanagari(once)
     assert once == twice  # idempotent
-    assert "\u200B" not in once
-    assert "\u200C" not in once
-    assert "\u200D" not in once
+    assert "\u200b" not in once
+    assert "\u200c" not in once
+    assert "\u200d" not in once
 
 
 def test_clean_text_removes_url_html_emoji() -> None:
