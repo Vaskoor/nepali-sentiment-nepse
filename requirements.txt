@@ -23,7 +23,7 @@ tokenizers>=0.15
 
 # --- NLP / Devanagari -------------------------------------------------------
 indic-nlp-library>=0.92
-sentencepiece>=0.1.99
+sentencepiece>=0.2.2
 
 # --- Calibration & conformal ------------------------------------------------
 mapie>=0.7            # conformal prediction helpers (optional)
