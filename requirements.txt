@@ -26,7 +26,7 @@ indic-nlp-library>=0.92
 sentencepiece>=0.1.99
 
 # --- Calibration & conformal ------------------------------------------------
-mapie>=0.7            # conformal prediction helpers (optional)
+mapie>=1.5.0            # conformal prediction helpers (optional)
 
 # --- Tracking & versioning --------------------------------------------------
 mlflow>=2.9
