@@ -23,6 +23,6 @@ from importlib.metadata import version as _pkg_version
 try:
     __version__ = _pkg_version("nepse-nlp")
 except PackageNotFoundError:  # not installed (dev mode)
-    __version__ = "0.1.0+dev"
+    __version__ = "0.2.0"
 
 __all__ = ["__version__"]

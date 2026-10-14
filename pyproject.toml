@@ -4,23 +4,37 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nepse-nlp"
-version = "0.1.0"
+version = "0.2.0"
 description = "Sentiment Analysis of Nepali News for NEPSE Stock Prediction Using Jev and Confidence-Gated Hybrid Architectures"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
-authors = [{ name = "Nepse NLP Research" }]
+authors = [{ name = "Bhaskar Kaphle", email = "kaphlebhaskar012345@gmail.com" }]
+maintainers = [{ name = "Bhaskar Kaphle", email = "kaphlebhaskar012345@gmail.com" }]
 keywords = [
   "nepali", "sentiment-analysis", "nepse", "low-resource-nlp",
-  "financial-nlp", "conformal-prediction", "calibration", "jev"
+  "financial-nlp", "conformal-prediction", "calibration", "jev",
+  "devanagari", "walk-forward", "backtesting", "hybrid-inference",
 ]
 classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Console",
+  "Framework :: FastAPI",
+  "Intended Audience :: Financial and Insurance Industry",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Natural Language :: Nepali",
+  "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
-  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+  "Topic :: Office/Business :: Financial :: Investment",
   "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: Text Processing :: Linguistic",
+  "Typing :: Typed",
 ]
 dependencies = [
   "numpy>=1.24,<3.0",
@@ -37,13 +51,18 @@ deep = ["torch>=2.1", "transformers>=4.36", "tokenizers>=0.15", "indic-nlp-libra
 api = ["fastapi>=0.109", "uvicorn[standard]>=0.27", "streamlit>=1.31", "plotly>=5.18", "altair>=5.2"]
 scrape = ["requests>=2.31", "aiohttp>=3.9", "beautifulsoup4>=4.12", "lxml>=5.1"]
 track = ["mlflow>=2.9", "dvc>=3.36"]
-dev = ["pytest>=8.0", "pytest-cov>=4.1", "ruff>=0.3", "black>=24.2", "mypy>=1.8"]
+dev = ["pytest>=8.0", "pytest-cov>=4.1", "ruff>=0.3", "black>=24.2", "mypy>=1.8", "pre-commit>=3.6", "codespell>=2.3"]
 all = ["nepse-nlp[deep,api,scrape,track,dev]"]
 
 [project.urls]
-Homepage = "https://github.com/your-username/nepali-sentiment-nepse"
-Documentation = "https://github.com/your-username/nepali-sentiment-nepse#readme"
-Issues = "https://github.com/your-username/nepali-sentiment-nepse/issues"
+Homepage = "https://github.com/Vaskoor/nepali-sentiment-nepse"
+Documentation = "https://github.com/Vaskoor/nepali-sentiment-nepse#readme"
+Repository = "https://github.com/Vaskoor/nepali-sentiment-nepse"
+"Source Code" = "https://github.com/Vaskoor/nepali-sentiment-nepse"
+"Bug Tracker" = "https://github.com/Vaskoor/nepali-sentiment-nepse/issues"
+Discussions = "https://github.com/Vaskoor/nepali-sentiment-nepse/discussions"
+Changelog = "https://github.com/Vaskoor/nepali-sentiment-nepse/blob/main/CHANGELOG.md"
+"Citation" = "https://github.com/Vaskoor/nepali-sentiment-nepse/blob/main/CITATION.cff"
 
 [project.scripts]
 nepse-phase1 = "scripts.phase1_preprocess:main"

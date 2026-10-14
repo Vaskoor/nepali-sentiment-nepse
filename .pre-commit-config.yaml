@@ -1,0 +1,54 @@
+# Pre-commit hooks — installed via `pre-commit install` (see CONTRIBUTING.md).
+# Runs on every commit: ruff (lint+format), black, codespell, and standard hygiene.
+ci:
+  autofix_commit_msg: "chore(pre-commit): auto-fixes"
+  autoupdate_commit_msg: "chore(pre-commit): bump hooks"
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+      - id: check-toml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=500]
+      - id: check-case-conflict
+      - id: check-symlinks
+      - id: detect-private-key
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: requirements-txt-fixer
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+        files: ^(src|tests|scripts|api|dashboard)/
+
+  - repo: https://github.com/psf/black
+    rev: 24.8.0
+    hooks:
+      - id: black
+        language_version: python
+        files: ^(src|tests|scripts|api|dashboard)/
+
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.3.0
+    hooks:
+      - id: codespell
+        args: [--ignore-words-list=ne,nepse,jev,afaik,sher --check-filenames, --check-hidden]
+        exclude: ^(paper/.*\.tex|.*\.lock|results/|data/|mlruns/)
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.11.2
+    hooks:
+      - id: mypy
+        additional_dependencies: [numpy, pandas, scikit-learn, xgboost]
+        pass_filenames: false
+        args: [--ignore-missing-imports, src/nepse_nlp]

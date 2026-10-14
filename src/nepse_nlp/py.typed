@@ -1,0 +1,2 @@
+# PEP 561 — this package ships inline type information.
+# Tools (mypy, pyright) may read these annotations.

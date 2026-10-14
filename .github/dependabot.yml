@@ -1,0 +1,30 @@
+# Dependabot — keep Python deps and GitHub Actions current.
+# Security-only updates for the heavy ML stack; broader for tooling.
+
+version: 2
+updates:
+  # Python runtime deps — weekly, security-focused (avoid surprise major bumps
+  # for torch/transformers which can break reproducibility).
+  - package-ecosystem: pip
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels: [dependencies, python]
+    groups:
+      ml-stack:
+        patterns: [torch, transformers, tokenizers, xgboost, scikit-learn]
+        update-types: [patch]
+      tooling:
+        patterns: [ruff, black, mypy, pytest, pytest-cov]
+        update-types: [minor, patch]
+
+  # GitHub Actions — keep action versions fresh (checkout, setup-python, etc.).
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels: [dependencies, github-actions]

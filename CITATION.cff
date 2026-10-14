@@ -1,0 +1,42 @@
+cff-version: 1.2.0
+message: "If you use this software or the accompanying research artifacts, please cite as below."
+title: "Sentiment Analysis of Nepali News for NEPSE Stock Prediction Using Jev and Confidence-Gated Hybrid Architectures"
+abstract: >-
+  An end-to-end, reproducible research pipeline for low-resource Nepali
+  financial sentiment analysis: Devanagari-aware preprocessing, a Jev
+  (System One) zero-shot benchmark with calibration analysis
+  (Brier / ECE / reliability), a confidence-gated hybrid pipeline with
+  conformally-calibrated escalation thresholds and a cost-accuracy Pareto
+  frontier, and sentiment-augmented next-day NEPSE index prediction under
+  strict walk-forward validation with realistic transaction-cost
+  backtesting. Ships a LaTeX paper draft, FastAPI service, Streamlit
+  dashboard, Dockerfile, and GitHub Actions CI/CD.
+authors:
+  - family-names: Kaphle
+    given-names: Bhaskar
+    orcid: "https://orcid.org/0000-0000-0000-0000"
+    email: kaphlebhaskar012345@gmail.com
+keywords:
+  - low-resource NLP
+  - Nepali
+  - financial sentiment
+  - NEPSE
+  - conformal prediction
+  - calibration
+  - Jev
+  - walk-forward backtesting
+  - hybrid inference
+license: MIT
+repository-code: "https://github.com/Vaskoor/nepali-sentiment-nepse"
+version: "0.2.0"
+date-released: "2026-10-14"
+preferred-citation:
+  type: software
+  title: "Sentiment Analysis of Nepali News for NEPSE Stock Prediction Using Jev and Confidence-Gated Hybrid Architectures"
+  authors:
+    - family-names: Kaphle
+      given-names: Bhaskar
+  repository-code: "https://github.com/Vaskoor/nepali-sentiment-nepse"
+  license: MIT
+  version: "0.2.0"
+  year: 2026
